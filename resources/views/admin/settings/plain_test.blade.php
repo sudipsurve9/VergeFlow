@@ -1,0 +1,1 @@
+<div style="padding:2rem;font-size:1.5rem;color:green;">Plain test view loaded! If you see this, Blade and routing work without the admin layout.</div> 
