@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,5 +150,13 @@ Route::delete('/wishlists/{id}', [App\Http\Controllers\WishlistController::class
 
 // Cart count route for AJAX/cart badge
 Route::get('/cart/count', [App\Http\Controllers\CartController::class, 'getCartCount'])->name('cart.count');
+
+// Smart admin route
+Route::get('/admin', function () {
+    if (Auth::check() && Auth::user()->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+    return redirect()->route('admin.login');
+});
 
 require __DIR__.'/auth.php';
