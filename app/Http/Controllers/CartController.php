@@ -73,12 +73,14 @@ class CartController extends Controller
 
     public function remove($id)
     {
+        \Log::info('CartController@remove called', ['id' => $id, 'user_id' => Auth::id()]);
         $cartItem = $this->getCartItemById($id);
-        
         if ($cartItem) {
+            \Log::info('Deleting cart item', ['cart_item' => $cartItem->toArray()]);
             $cartItem->delete();
+        } else {
+            \Log::warning('Cart item not found', ['id' => $id]);
         }
-
         return back()->with('success', 'Item removed from cart');
     }
 

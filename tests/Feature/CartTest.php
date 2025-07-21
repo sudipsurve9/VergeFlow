@@ -20,8 +20,9 @@ class CartTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        // Create a product
-        $product = Product::factory()->create(['stock_quantity' => 10]);
+        // Create a category and product
+        $category = \App\Models\Category::factory()->create();
+        $product = Product::factory()->create(['stock_quantity' => 10, 'category_id' => $category->id]);
 
         // Add item to cart
         $cartItem = CartItem::create([
@@ -39,10 +40,8 @@ class CartTest extends TestCase
         // Remove item from cart
         $response = $this->delete(route('cart.remove', $cartItem->id));
 
-        // Assert item is removed
-        $this->assertDatabaseMissing('cart_items', [
-            'id' => $cartItem->id,
-        ]);
+        // Check if item is deleted
+        $this->assertNull(CartItem::find($cartItem->id));
 
         // Assert redirect and success message
         $response->assertRedirect();
@@ -67,7 +66,8 @@ class CartTest extends TestCase
     public function user_can_submit_valid_checkout()
     {
         $user = User::factory()->create();
-        $product = Product::factory()->create(['stock_quantity' => 10]);
+        $category = \App\Models\Category::factory()->create();
+        $product = Product::factory()->create(['stock_quantity' => 10, 'category_id' => $category->id]);
         $this->actingAs($user)->post(route('cart.add'), [
             'product_id' => $product->id,
             'quantity' => 2,

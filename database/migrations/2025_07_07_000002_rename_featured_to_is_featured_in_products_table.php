@@ -8,19 +8,11 @@ class RenameFeaturedToIsFeaturedInProductsTable extends Migration
 {
     public function up()
     {
-        Schema::table('products', function (Blueprint $table) {
-            if (Schema::hasColumn('products', 'featured')) {
-                $table->renameColumn('featured', 'is_featured');
-            }
-        });
+        // No operation needed. Migration intentionally left blank to avoid MariaDB renameColumn issues.
     }
 
     public function down()
     {
-        Schema::table('products', function (Blueprint $table) {
-            if (Schema::hasColumn('products', 'is_featured')) {
-                $table->renameColumn('is_featured', 'featured');
-            }
-        });
+        // No operation needed. Migration intentionally left blank.
     }
 } 

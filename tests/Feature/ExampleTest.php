@@ -29,19 +29,9 @@ class ExampleTest extends TestCase
      */
     public function test_admin_can_view_print_invoice_page()
     {
-        $admin = \App\Models\User::factory()->create([
-            'role' => 'admin',
-        ]);
-
-        $shippingAddress = \App\Models\Address::factory()->create([
-            'user_id' => $admin->id,
-            'type' => 'shipping',
-        ]);
-        $billingAddress = \App\Models\Address::factory()->create([
-            'user_id' => $admin->id,
-            'type' => 'billing',
-        ]);
-
+        $admin = \App\Models\User::factory()->create(['role' => 'admin']);
+        $shippingAddress = \App\Models\Address::factory()->create(['user_id' => $admin->id, 'type' => 'shipping']);
+        $billingAddress = \App\Models\Address::factory()->create(['user_id' => $admin->id, 'type' => 'billing']);
         $order = \App\Models\Order::factory()
             ->for($admin, 'user')
             ->has(\App\Models\OrderItem::factory()->count(1), 'items')
@@ -49,14 +39,11 @@ class ExampleTest extends TestCase
                 'shipping_address' => $shippingAddress->id,
                 'billing_address' => $billingAddress->id,
             ]);
-
         \App\Models\Payment::factory()->create([
             'order_id' => $order->id,
             'amount' => $order->total_amount,
         ]);
-
         $response = $this->actingAs($admin)->get(route('admin.orders.invoice', $order));
-
         $response->assertStatus(200);
         $response->assertSee('INVOICE');
         $response->assertSee('Order #:');
@@ -69,19 +56,9 @@ class ExampleTest extends TestCase
      */
     public function test_admin_can_download_invoice_pdf()
     {
-        $admin = \App\Models\User::factory()->create([
-            'role' => 'admin',
-        ]);
-
-        $shippingAddress = \App\Models\Address::factory()->create([
-            'user_id' => $admin->id,
-            'type' => 'shipping',
-        ]);
-        $billingAddress = \App\Models\Address::factory()->create([
-            'user_id' => $admin->id,
-            'type' => 'billing',
-        ]);
-
+        $admin = \App\Models\User::factory()->create(['role' => 'admin']);
+        $shippingAddress = \App\Models\Address::factory()->create(['user_id' => $admin->id, 'type' => 'shipping']);
+        $billingAddress = \App\Models\Address::factory()->create(['user_id' => $admin->id, 'type' => 'billing']);
         $order = \App\Models\Order::factory()
             ->for($admin, 'user')
             ->has(\App\Models\OrderItem::factory()->count(1), 'items')
@@ -89,14 +66,11 @@ class ExampleTest extends TestCase
                 'shipping_address' => $shippingAddress->id,
                 'billing_address' => $billingAddress->id,
             ]);
-
         \App\Models\Payment::factory()->create([
             'order_id' => $order->id,
             'amount' => $order->total_amount,
         ]);
-
         $response = $this->actingAs($admin)->get(route('admin.orders.invoice.pdf', $order));
-
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
         $this->assertStringStartsWith('%PDF', $response->getContent());
@@ -109,19 +83,9 @@ class ExampleTest extends TestCase
      */
     public function test_admin_can_download_tcpdf_invoice_pdf()
     {
-        $admin = \App\Models\User::factory()->create([
-            'role' => 'admin',
-        ]);
-
-        $shippingAddress = \App\Models\Address::factory()->create([
-            'user_id' => $admin->id,
-            'type' => 'shipping',
-        ]);
-        $billingAddress = \App\Models\Address::factory()->create([
-            'user_id' => $admin->id,
-            'type' => 'billing',
-        ]);
-
+        $admin = \App\Models\User::factory()->create(['role' => 'admin']);
+        $shippingAddress = \App\Models\Address::factory()->create(['user_id' => $admin->id, 'type' => 'shipping']);
+        $billingAddress = \App\Models\Address::factory()->create(['user_id' => $admin->id, 'type' => 'billing']);
         $order = \App\Models\Order::factory()
             ->for($admin, 'user')
             ->has(\App\Models\OrderItem::factory()->count(1), 'items')
@@ -129,13 +93,10 @@ class ExampleTest extends TestCase
                 'shipping_address' => $shippingAddress->id,
                 'billing_address' => $billingAddress->id,
             ]);
-
         \App\Models\Payment::factory()->create([
             'order_id' => $order->id,
         ]);
-
         $response = $this->actingAs($admin)->get(route('admin.orders.invoice.tcpdf', $order));
-
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/pdf');
         $this->assertStringStartsWith('%PDF', $response->getContent());
@@ -178,6 +139,7 @@ class ExampleTest extends TestCase
             'name' => 'Updated Name',
             'email' => $user->email,
         ]);
+        $user->refresh();
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'name' => 'Updated Name',
@@ -188,11 +150,12 @@ class ExampleTest extends TestCase
     public function admin_can_create_product()
     {
         $admin = User::factory()->create(['role' => 'admin']);
+        $category = \App\Models\Category::factory()->create();
         $this->actingAs($admin)->post('/admin/products', [
             'name' => 'Admin Product',
             'price' => 199,
             'stock_quantity' => 5,
-            'category_id' => 1,
+            'category_id' => $category->id,
         ]);
         $this->assertDatabaseHas('products', [
             'name' => 'Admin Product',
@@ -209,6 +172,7 @@ class ExampleTest extends TestCase
         $this->actingAs($admin)->put("/admin/orders/{$order->id}", [
             'status' => 'completed',
         ]);
+        $order->refresh();
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
             'status' => 'completed',

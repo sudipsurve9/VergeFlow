@@ -146,7 +146,7 @@ Route::post('/orders', [App\Http\Controllers\OrderController::class, 'store'])->
 Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
 
 // Wishlist destroy route
-Route::delete('/wishlists/{id}', [App\Http\Controllers\WishlistController::class, 'destroy'])->name('wishlist.destroy');
+Route::delete('/wishlists/{id}', [App\Http\Controllers\WishlistController::class, 'destroy'])->name('wishlists.destroy');
 
 // Cart count route for AJAX/cart badge
 Route::get('/cart/count', [App\Http\Controllers\CartController::class, 'getCartCount'])->name('cart.count');
@@ -158,5 +158,10 @@ Route::get('/admin', function () {
     }
     return redirect()->route('admin.login');
 });
+
+// Explicit login route mapping
+Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
+Route::get('/admin/login', [App\Http\Controllers\Auth\AdminLoginController::class, 'showLoginForm'])->name('admin.login');
+Route::get('/super-admin/login', [App\Http\Controllers\Auth\SuperAdminLoginController::class, 'showLoginForm'])->name('super_admin.login');
 
 require __DIR__.'/auth.php';

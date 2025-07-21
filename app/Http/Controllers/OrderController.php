@@ -35,6 +35,9 @@ class OrderController extends Controller
 
     public function processCheckout(Request $request)
     {
+        \Log::info('OrderController@processCheckout called', ['user_id' => Auth::id()]);
+        $cartItems = CartItem::with('product')->where('user_id', Auth::id())->get();
+        \Log::info('Cart items at checkout', ['count' => $cartItems->count(), 'items' => $cartItems->toArray()]);
         $request->validate([
             'shipping_address' => 'required|string',
             'billing_address' => 'required|string',
@@ -43,7 +46,6 @@ class OrderController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $cartItems = CartItem::with('product')->where('user_id', Auth::id())->get();
         
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty');
