@@ -19,11 +19,7 @@ class AdminLoginController extends Controller
         // If user is already logged in, redirect based on their role
         if (Auth::check()) {
             $user = Auth::user();
-            
-            if ($user->isSuperAdmin()) {
-                return redirect()->route('super_admin.dashboard')
-                    ->with('info', 'You are logged in as Super Admin. Please logout to access Admin portal.');
-            } elseif ($user->isAdmin()) {
+            if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard')
                     ->with('info', 'You are already logged in as Admin.');
             } else {
@@ -31,7 +27,6 @@ class AdminLoginController extends Controller
                     ->with('info', 'You are logged in as Customer. Please logout to access Admin portal.');
             }
         }
-        
         return view('auth.admin_login');
     }
 
@@ -47,19 +42,12 @@ class AdminLoginController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
-            
             // Check if user is admin or super admin
             if ($user->isAdmin() || $user->isSuperAdmin()) {
                 $request->session()->regenerate();
-                
-                // Redirect based on role
-                if ($user->isSuperAdmin()) {
-                    return redirect()->intended(route('super_admin.dashboard'))
-                        ->with('success', 'Welcome back, Super Admin!');
-                } else {
-                    return redirect()->intended(route('admin.dashboard'))
-                        ->with('success', 'Welcome back, Admin!');
-                }
+                // Both admins and super admins go to admin dashboard
+                return redirect()->intended(route('admin.dashboard'))
+                    ->with('success', 'Welcome back, Admin!');
             } else {
                 // User is not admin, logout and show error
                 Auth::logout();
