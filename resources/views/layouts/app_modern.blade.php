@@ -862,6 +862,9 @@
                             @if(auth()->user()->role === 'admin')
                                 <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->is('admin*') ? 'active' : '' }}">Admin</a>
                             @endif
+                            @if(auth()->user()->role === 'super_admin')
+                                <a href="{{ route('super_admin.dashboard') }}" class="nav-link {{ request()->is('super-admin*') ? 'active' : '' }}">Super Admin</a>
+                            @endif
                         @endauth
                         <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">Profile</a>
                     </div>
@@ -886,6 +889,9 @@
                                 <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">My Orders</a>
                                 @if(auth()->user()->role === 'admin')
                                     <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->is('admin*') ? 'active' : '' }}">Admin</a>
+                                @endif
+                                @if(auth()->user()->role === 'super_admin')
+                                    <a href="{{ route('super_admin.dashboard') }}" class="nav-link {{ request()->is('super-admin*') ? 'active' : '' }}">Super Admin</a>
                                 @endif
                             @endauth
                             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">Profile</a>
