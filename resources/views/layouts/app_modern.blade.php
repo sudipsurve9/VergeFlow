@@ -708,6 +708,57 @@
         [data-theme="light"] .text-muted {
             color: #555 !important;
         }
+        @media (max-width: 991.98px) {
+            .main-header .row.align-items-center {
+                flex-direction: column;
+                text-align: center;
+            }
+            .main-header .col-md-3,
+            .main-header .col-md-6 {
+                width: 100%;
+                max-width: 100%;
+                flex: 0 0 100%;
+            }
+            .main-header .col-md-3.text-end {
+                justify-content: center !important;
+                margin-top: 10px;
+            }
+            .search-form {
+                margin: 10px 0;
+                max-width: 100%;
+            }
+            .navbar-collapse {
+                background: var(--secondary-bg);
+                padding: 1rem;
+            }
+            .category-nav .d-flex.flex-wrap {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .category-nav .nav-link {
+                margin-bottom: 8px;
+                padding: 12px 0;
+                border-radius: 10px;
+            }
+            .product-card {
+                margin-bottom: 20px;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .brand-text {
+                font-size: 1.2rem !important;
+            }
+            .main-header .row.align-items-center {
+                padding: 10px 0 !important;
+            }
+            .product-image {
+                height: 160px;
+            }
+            .banner-btn, .btn, .form-control {
+                font-size: 1rem;
+                min-height: 44px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -732,7 +783,7 @@
             </div>
         </div>
 
-        <!-- Main Header -->
+        <!-- Main Header with Hamburger -->
         <header class="main-header">
             <div class="container">
                 <div class="row align-items-center py-3">
@@ -784,14 +835,41 @@
                                 <i class="fa-solid fa-shopping-cart"></i>
                                 <span class="cart-badge" id="cart-count">0</span>
                             </a>
+                            <!-- Hamburger for mobile -->
+                            <button class="navbar-toggler d-lg-none ms-3" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </header>
-
-        <!-- Category Navigation -->
-        <nav class="category-nav" role="navigation" aria-label="Category navigation">
+        <!-- Mobile Navigation Collapse -->
+        <nav class="category-nav d-lg-none" role="navigation" aria-label="Mobile category navigation">
+            <div class="container">
+                <div class="collapse" id="mobileNav">
+                    <div class="d-flex flex-column">
+                        <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
+                        <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">All Products</a>
+                        @foreach($categories ?? [] as $category)
+                            <a href="{{ route('products.index', ['category' => $category->slug]) }}" 
+                               class="nav-link {{ request('category') == $category->slug ? 'active' : '' }}">
+                                {{ $category->name }}
+                            </a>
+                        @endforeach
+                        @auth
+                            <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">My Orders</a>
+                            @if(auth()->user()->role === 'admin')
+                                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->is('admin*') ? 'active' : '' }}">Admin</a>
+                            @endif
+                        @endauth
+                        <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">Profile</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- Desktop Navigation -->
+        <nav class="category-nav d-none d-lg-block" role="navigation" aria-label="Category navigation">
             <div class="container">
                 <div class="row">
                     <div class="col-12">
