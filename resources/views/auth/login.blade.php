@@ -4,31 +4,31 @@
 
     <div class="login-box">
         <div class="login-title">Sign in to<br>VergeFlow</div>
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+    <form method="POST" action="{{ route('login') }}">
+        @csrf
             <div class="form-group" style="margin-bottom: 1.2rem;">
                 <label for="email" style="display:block; font-weight:600; margin-bottom:0.3rem;">Email</label>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus style="width:100%; padding:0.7rem; border-radius:6px; border:none; font-size:1.1rem;">
                 @error('email')
                     <div style="color:#ffb300; margin-top:0.2rem; font-size:0.95rem;">{{ $message }}</div>
                 @enderror
-            </div>
+        </div>
             <div class="form-group" style="margin-bottom: 1.2rem;">
                 <label for="password" style="display:block; font-weight:600; margin-bottom:0.3rem;">Password</label>
                 <input id="password" type="password" name="password" required style="width:100%; padding:0.7rem; border-radius:6px; border:none; font-size:1.1rem;">
                 @error('password')
                     <div style="color:#ffb300; margin-top:0.2rem; font-size:0.95rem;">{{ $message }}</div>
                 @enderror
-            </div>
+        </div>
             <div class="form-group" style="display:flex; align-items:center; margin-bottom:1.2rem;">
                 <input type="checkbox" name="remember" id="remember" style="margin-right:0.5rem;">
                 <label for="remember" style="margin-bottom:0;">Remember me</label>
-            </div>
+        </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <a href="{{ route('password.request') }}" style="color:#4fc3f7; text-decoration:underline; font-size:0.98rem;">Forgot your password?</a>
                 <button type="submit" class="login-btn">Log in</button>
-            </div>
-        </form>
+        </div>
+    </form>
     </div>
     <style>
         .login-box {

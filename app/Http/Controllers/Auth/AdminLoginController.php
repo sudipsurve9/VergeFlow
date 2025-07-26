@@ -46,8 +46,8 @@ class AdminLoginController extends Controller
             if ($user->isAdmin() || $user->isSuperAdmin()) {
                 $request->session()->regenerate();
                 // Both admins and super admins go to admin dashboard
-                return redirect()->intended(route('admin.dashboard'))
-                    ->with('success', 'Welcome back, Admin!');
+                    return redirect()->intended(route('admin.dashboard'))
+                        ->with('success', 'Welcome back, Admin!');
             } else {
                 // User is not admin, logout and show error
                 Auth::logout();
