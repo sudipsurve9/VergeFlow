@@ -67,6 +67,7 @@ Route::post('/admin/logout', [App\Http\Controllers\Auth\AdminLoginController::cl
 Route::post('/cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
 Route::post('/cart/remove', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
 Route::post('/cart/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
+Route::post('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
 
 // Checkout route
 Route::post('/checkout', [App\Http\Controllers\OrderController::class, 'processCheckout'])->name('checkout.process');
