@@ -40,10 +40,7 @@
                                                              style="width: 80px; height: 80px; object-fit: cover;"
                                                              class="rounded me-3">
                                                     @else
-                                                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" 
-                                                             style="width: 80px; height: 80px;">
-                                                            <i class="fas fa-image fa-2x text-muted"></i>
-                                                        </div>
+                                                        <img src="{{ asset('images/placeholder.png') }}" alt="No image available" style="width: 80px; height: 80px; object-fit: cover;" class="rounded me-3">
                                                     @endif
                                                     <div>
                                                         <h6 class="mb-1 fw-bold product-title-glow">{{ $item->product->name }}</h6>
@@ -102,12 +99,12 @@
                     <a href="{{ route('products.index') }}" class="btn btn-outline-accent banner-btn" aria-label="Continue shopping - back to products">
                         <i class="fas fa-arrow-left me-2"></i>Continue Shopping
                     </a>
-                    <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" aria-label="Clear all items from cart">
+                    <form action="{{ route('cart.clear') }}" method="POST" class="d-inline" aria-label="Clear all items from cart" x-data="{ loading: false }" @submit="loading = true">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-outline-accent banner-btn" aria-label="Clear all items from cart" 
-                                onclick="return confirm('Clear all items from cart?')">
-                            <i class="fas fa-trash me-2"></i>Clear Cart
+                        <button type="submit" class="btn btn-outline-accent banner-btn" aria-label="Clear all items from cart" :disabled="loading" style="min-width: 120px;">
+                            <span x-show="!loading"><i class="fas fa-trash me-2"></i>Clear Cart</span>
+                            <span x-show="loading"><i class="fas fa-spinner fa-spin me-2"></i>Clearing...</span>
                         </button>
                     </form>
                 </div>
