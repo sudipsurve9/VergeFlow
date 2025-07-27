@@ -50,6 +50,9 @@
                             <div id="shipping-address-preview" class="alert alert-info" style="display: none;">
                                 <h6><i class="fas fa-map-marker-alt"></i> Selected Shipping Address:</h6>
                                 <div id="shipping-address-details"></div>
+                                <div id="shipping-phone-details" class="mt-2" style="display: none;">
+                                    <small class="text-muted"><i class="fas fa-phone"></i> Phone: <span id="shipping-phone-number"></span></small>
+                                </div>
                             </div>
                             
                             <!-- Phone Number -->
@@ -344,9 +347,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 details.innerHTML = address;
                 preview.style.display = 'block';
                 
+                // Show phone in preview if available
+                const phoneDetails = document.getElementById('shipping-phone-details');
+                const phoneNumber = document.getElementById('shipping-phone-number');
+                if (phone && phone.trim() !== '') {
+                    phoneNumber.textContent = phone;
+                    phoneDetails.style.display = 'block';
+                } else {
+                    phoneDetails.style.display = 'none';
+                }
+                
                 // Auto-fill phone if available
-                if (phone && phoneInput) {
+                if (phone && phone.trim() !== '' && phoneInput) {
                     phoneInput.value = phone;
+                    // Add visual feedback for auto-filled phone
+                    phoneInput.classList.add('border-success');
+                    setTimeout(() => {
+                        phoneInput.classList.remove('border-success');
+                    }, 2000);
+                } else if (phoneInput && !phoneInput.value) {
+                    // Clear phone input if no phone in address
+                    phoneInput.value = '';
                 }
                 
                 // If "same as shipping" is checked, update billing
