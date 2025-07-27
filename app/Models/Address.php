@@ -84,6 +84,14 @@ class Address extends Model
     }
 
     /**
+     * Get formatted address (alias for getFullAddressAttribute)
+     */
+    public function getFormattedAddress()
+    {
+        return $this->getFullAddressAttribute();
+    }
+
+    /**
      * Scope for default shipping addresses
      */
     public function scopeDefaultShipping($query)
