@@ -12,61 +12,55 @@
         @csrf
         <div class="row">
             <div class="col-lg-8">
-                <!-- Shipping Information -->
-                <div class="card mb-4" role="region" aria-label="Shipping information">
-                    <div class="card-header neon-glow">
-                        <h5 class="mb-0">Shipping Information</h5>
+                <!-- Shipping Address Selection -->
+                <div class="card mb-4" role="region" aria-label="Shipping address selection">
+                    <div class="card-header neon-glow d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Shipping Address</h5>
+                        <a href="{{ route('addresses.index') }}" class="btn btn-outline-accent btn-sm" target="_blank">
+                            <i class="fas fa-plus"></i> Manage Addresses
+                        </a>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label for="address_line1" class="form-label">Address Line 1 *</label>
-                            <input type="text" class="form-control @error('address_line1') is-invalid @enderror" id="address_line1" name="address_line1" value="{{ old('address_line1') }}" required>
-                            @error('address_line1')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="address_line2" class="form-label">Address Line 2 *</label>
-                            <input type="text" class="form-control @error('address_line2') is-invalid @enderror" id="address_line2" name="address_line2" value="{{ old('address_line2') }}" required>
-                            @error('address_line2')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="landmark" class="form-label">Landmark (Optional)</label>
-                            <input type="text" class="form-control @error('landmark') is-invalid @enderror" id="landmark" name="landmark" value="{{ old('landmark') }}">
-                            @error('landmark')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="locality" class="form-label">Locality/Area *</label>
-                            <input type="text" class="form-control @error('locality') is-invalid @enderror" id="locality" name="locality" value="{{ old('locality') }}" required>
-                            @error('locality')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="city" class="form-label">City *</label>
-                            <input type="text" class="form-control @error('city') is-invalid @enderror" id="city" name="city" value="{{ old('city') }}" required>
-                            @error('city')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="state" class="form-label">State *</label>
-                            <input type="text" class="form-control @error('state') is-invalid @enderror" id="state" name="state" value="{{ old('state') }}" required>
-                            @error('state')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="pincode" class="form-label">Pincode *</label>
-                            <input type="text" class="form-control @error('pincode') is-invalid @enderror" id="pincode" name="pincode" value="{{ old('pincode') }}" required>
-                            @error('pincode')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        @if($addresses->isEmpty())
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                You don't have any saved addresses. Please <a href="{{ route('addresses.index') }}" target="_blank">add an address</a> first.
+                            </div>
+                        @else
+                            <div class="mb-3">
+                                <label for="shipping_address_id" class="form-label">Select Shipping Address *</label>
+                                <select class="form-select @error('shipping_address_id') is-invalid @enderror" id="shipping_address_id" name="shipping_address_id" required>
+                                    <option value="">Choose shipping address...</option>
+                                    @foreach($addresses as $address)
+                                        <option value="{{ $address->id }}" 
+                                                {{ (old('shipping_address_id') == $address->id || ($defaultShippingAddress && $defaultShippingAddress->id == $address->id)) ? 'selected' : '' }}
+                                                data-address="{{ $address->getFormattedAddress() }}"
+                                                data-phone="{{ $address->phone }}">
+                                            {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->pincode }}
+                                            @if($address->is_default_shipping) (Default) @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('shipping_address_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <!-- Selected Address Preview -->
+                            <div id="shipping-address-preview" class="alert alert-info" style="display: none;">
+                                <h6><i class="fas fa-map-marker-alt"></i> Selected Shipping Address:</h6>
+                                <div id="shipping-address-details"></div>
+                            </div>
+                            
+                            <!-- Phone Number -->
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number *</label>
+                                <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone') }}" required>
+                                @error('phone')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -133,61 +127,48 @@
                     </div>
                 </div>
 
-                <!-- Billing Information -->
-                <div class="card mb-4" role="region" aria-label="Billing information">
-                    <div class="card-header neon-glow">
-                        <h5 class="mb-0">Billing Information</h5>
+                <!-- Billing Address Selection -->
+                <div class="card mb-4" role="region" aria-label="Billing address selection">
+                    <div class="card-header neon-glow d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Billing Address</h5>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="same_as_shipping" name="same_as_shipping" {{ old('same_as_shipping') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="same_as_shipping">
+                                Same as shipping
+                            </label>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="billing_address_line1" class="form-label">Billing Address Line 1 *</label>
-                            <input type="text" class="form-control @error('billing_address_line1') is-invalid @enderror" id="billing_address_line1" name="billing_address_line1" value="{{ old('billing_address_line1') }}" required>
-                            @error('billing_address_line1')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="billing_address_line2" class="form-label">Billing Address Line 2 *</label>
-                            <input type="text" class="form-control @error('billing_address_line2') is-invalid @enderror" id="billing_address_line2" name="billing_address_line2" value="{{ old('billing_address_line2') }}" required>
-                            @error('billing_address_line2')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="billing_landmark" class="form-label">Billing Landmark (Optional)</label>
-                            <input type="text" class="form-control @error('billing_landmark') is-invalid @enderror" id="billing_landmark" name="billing_landmark" value="{{ old('billing_landmark') }}">
-                            @error('billing_landmark')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="billing_locality" class="form-label">Billing Locality/Area *</label>
-                            <input type="text" class="form-control @error('billing_locality') is-invalid @enderror" id="billing_locality" name="billing_locality" value="{{ old('billing_locality') }}" required>
-                            @error('billing_locality')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="billing_city" class="form-label">Billing City *</label>
-                            <input type="text" class="form-control @error('billing_city') is-invalid @enderror" id="billing_city" name="billing_city" value="{{ old('billing_city') }}" required>
-                            @error('billing_city')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="billing_state" class="form-label">Billing State *</label>
-                            <input type="text" class="form-control @error('billing_state') is-invalid @enderror" id="billing_state" name="billing_state" value="{{ old('billing_state') }}" required>
-                            @error('billing_state')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="billing_pincode" class="form-label">Billing Pincode *</label>
-                            <input type="text" class="form-control @error('billing_pincode') is-invalid @enderror" id="billing_pincode" name="billing_pincode" value="{{ old('billing_pincode') }}" required>
-                            @error('billing_pincode')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                    <div class="card-body" id="billing-address-section">
+                        @if($addresses->isEmpty())
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                You don't have any saved addresses. Please <a href="{{ route('addresses.index') }}" target="_blank">add an address</a> first.
+                            </div>
+                        @else
+                            <div class="mb-3">
+                                <label for="billing_address_id" class="form-label">Select Billing Address *</label>
+                                <select class="form-select @error('billing_address_id') is-invalid @enderror" id="billing_address_id" name="billing_address_id" required>
+                                    <option value="">Choose billing address...</option>
+                                    @foreach($addresses as $address)
+                                        <option value="{{ $address->id }}" 
+                                                {{ (old('billing_address_id') == $address->id || ($defaultBillingAddress && $defaultBillingAddress->id == $address->id)) ? 'selected' : '' }}
+                                                data-address="{{ $address->getFormattedAddress() }}">
+                                            {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->pincode }}
+                                            @if($address->is_default_billing) (Default) @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('billing_address_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <!-- Selected Billing Address Preview -->
+                            <div id="billing-address-preview" class="alert alert-info" style="display: none;">
+                                <h6><i class="fas fa-map-marker-alt"></i> Selected Billing Address:</h6>
+                                <div id="billing-address-details"></div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -341,8 +322,112 @@ function toggleStripeSection() {
 paymentRadios.forEach(radio => radio.addEventListener('change', toggleStripeSection));
 toggleStripeSection();
 
+// Address selection functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const shippingSelect = document.getElementById('shipping_address_id');
+    const billingSelect = document.getElementById('billing_address_id');
+    const sameAsShippingCheckbox = document.getElementById('same_as_shipping');
+    const billingSection = document.getElementById('billing-address-section');
+    const phoneInput = document.getElementById('phone');
+    
+    // Handle shipping address selection
+    if (shippingSelect) {
+        shippingSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const preview = document.getElementById('shipping-address-preview');
+            const details = document.getElementById('shipping-address-details');
+            
+            if (selectedOption.value) {
+                const address = selectedOption.getAttribute('data-address');
+                const phone = selectedOption.getAttribute('data-phone');
+                
+                details.innerHTML = address;
+                preview.style.display = 'block';
+                
+                // Auto-fill phone if available
+                if (phone && phoneInput) {
+                    phoneInput.value = phone;
+                }
+                
+                // If "same as shipping" is checked, update billing
+                if (sameAsShippingCheckbox && sameAsShippingCheckbox.checked) {
+                    updateBillingFromShipping();
+                }
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+        
+        // Trigger change event if there's a pre-selected value
+        if (shippingSelect.value) {
+            shippingSelect.dispatchEvent(new Event('change'));
+        }
+    }
+    
+    // Handle billing address selection
+    if (billingSelect) {
+        billingSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const preview = document.getElementById('billing-address-preview');
+            const details = document.getElementById('billing-address-details');
+            
+            if (selectedOption.value) {
+                const address = selectedOption.getAttribute('data-address');
+                details.innerHTML = address;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+        
+        // Trigger change event if there's a pre-selected value
+        if (billingSelect.value) {
+            billingSelect.dispatchEvent(new Event('change'));
+        }
+    }
+    
+    // Handle "same as shipping" functionality
+    if (sameAsShippingCheckbox) {
+        sameAsShippingCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                billingSection.style.display = 'none';
+                updateBillingFromShipping();
+            } else {
+                billingSection.style.display = 'block';
+                // Clear billing selection
+                if (billingSelect) {
+                    billingSelect.value = '';
+                    billingSelect.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+        
+        // Initial state
+        if (sameAsShippingCheckbox.checked) {
+            billingSection.style.display = 'none';
+            updateBillingFromShipping();
+        }
+    }
+    
+    function updateBillingFromShipping() {
+        if (shippingSelect && billingSelect && shippingSelect.value) {
+            billingSelect.value = shippingSelect.value;
+            billingSelect.dispatchEvent(new Event('change'));
+        }
+    }
+});
+
 const form = document.querySelector('form[action="{{ route('orders.store') }}"]');
 form.addEventListener('submit', function(e) {
+    // Handle "same as shipping" before form submission
+    const sameAsShippingCheckbox = document.getElementById('same_as_shipping');
+    const shippingSelect = document.getElementById('shipping_address_id');
+    const billingSelect = document.getElementById('billing_address_id');
+    
+    if (sameAsShippingCheckbox && sameAsShippingCheckbox.checked && shippingSelect && billingSelect) {
+        billingSelect.value = shippingSelect.value;
+    }
+    
     if (document.getElementById('stripe').checked) {
         e.preventDefault();
         stripe.createToken(card).then(function(result) {
@@ -361,4 +446,4 @@ form.addEventListener('submit', function(e) {
 });
 </script>
 @endpush
-@endsection 
+@endsection

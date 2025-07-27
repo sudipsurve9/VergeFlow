@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
+use App\Models\Address;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Stripe\Stripe;
@@ -30,7 +31,12 @@ class OrderController extends Controller
             return $item->total;
         });
 
-        return view('orders.checkout', compact('cartItems', 'total'));
+        // Get user's saved addresses
+        $addresses = Address::where('user_id', Auth::id())->get();
+        $defaultShippingAddress = $addresses->where('is_default_shipping', true)->first();
+        $defaultBillingAddress = $addresses->where('is_default_billing', true)->first();
+
+        return view('orders.checkout', compact('cartItems', 'total', 'addresses', 'defaultShippingAddress', 'defaultBillingAddress'));
     }
 
     public function processCheckout(Request $request)
@@ -102,8 +108,8 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'shipping_address' => 'required|string',
-            'billing_address' => 'required|string',
+            'shipping_address_id' => 'required|exists:addresses,id',
+            'billing_address_id' => 'required|exists:addresses,id',
             'phone' => 'required|string',
             'payment_method' => 'required|string',
             'notes' => 'nullable|string',
@@ -140,25 +146,18 @@ class OrderController extends Controller
                 }
             }
 
-            $shipping_address = $request->shipping_address ?? (
-                $request->address_line1 . ', ' .
-                $request->address_line2 . ', ' .
-                ($request->landmark ? $request->landmark . ', ' : '') .
-                $request->locality . ', ' .
-                $request->city . ', ' .
-                $request->state . ' - ' .
-                $request->pincode
-            );
+            // Get selected addresses
+            $shippingAddress = Address::where('id', $request->shipping_address_id)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+            
+            $billingAddress = Address::where('id', $request->billing_address_id)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
 
-            $billing_address = $request->billing_address ?? (
-                $request->billing_address_line1 . ', ' .
-                $request->billing_address_line2 . ', ' .
-                ($request->billing_landmark ? $request->billing_landmark . ', ' : '') .
-                $request->billing_locality . ', ' .
-                $request->billing_city . ', ' .
-                $request->billing_state . ' - ' .
-                $request->billing_pincode
-            );
+            // Format addresses for storage
+            $shipping_address = $shippingAddress->getFormattedAddressAttribute();
+            $billing_address = $billingAddress->getFormattedAddressAttribute();
 
             $order = Order::create([
                 'order_number' => Order::generateOrderNumber(),
