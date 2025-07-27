@@ -30,8 +30,11 @@
                         <dd class="col-8">{{ $user->address ?? '—' }}</dd>
                     </dl>
                     <div class="mt-4 text-center">
-                        <a href="{{ route('profile.edit') }}" class="btn btn-accent btn-lg" aria-label="Edit profile information">
+                        <a href="{{ route('profile.edit') }}" class="btn btn-accent btn-lg me-3 mb-2" aria-label="Edit profile information">
                             <i class="fas fa-edit me-2"></i>Edit Profile
+                        </a>
+                        <a href="{{ route('addresses.index') }}" class="btn btn-outline-accent btn-lg mb-2" aria-label="Manage your addresses">
+                            <i class="fas fa-map-marker-alt me-2"></i>Address Book
                         </a>
                     </div>
                 </div>

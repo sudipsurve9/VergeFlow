@@ -76,6 +76,12 @@ Route::delete('/cart/remove/{id}', [App\Http\Controllers\CartController::class, 
 Route::put('/cart/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
 Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
 
+// AJAX Cart routes for enhanced user experience
+Route::post('/cart/ajax/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.ajax.add');
+Route::delete('/cart/ajax/remove/{id}', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.ajax.remove');
+Route::put('/cart/ajax/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.ajax.update');
+Route::delete('/cart/ajax/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.ajax.clear');
+
 // Checkout route
 Route::post('/checkout', [App\Http\Controllers\OrderController::class, 'processCheckout'])->name('checkout.process');
 
@@ -203,5 +209,14 @@ Route::get('/admin', function () {
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/admin/login', [App\Http\Controllers\Auth\AdminLoginController::class, 'showLoginForm'])->name('admin.login');
 Route::get('/super-admin/login', [App\Http\Controllers\Auth\SuperAdminLoginController::class, 'showLoginForm'])->name('super_admin.login');
+
+// Address Management Routes (Amazon-style)
+Route::middleware(['auth'])->group(function () {
+    Route::resource('addresses', App\Http\Controllers\AddressController::class);
+    Route::post('addresses/{address}/set-default-shipping', [App\Http\Controllers\AddressController::class, 'setDefaultShipping'])->name('addresses.set-default-shipping');
+    Route::post('addresses/{address}/set-default-billing', [App\Http\Controllers\AddressController::class, 'setDefaultBilling'])->name('addresses.set-default-billing');
+    Route::get('addresses/checkout/{type}', [App\Http\Controllers\AddressController::class, 'getForCheckout'])->name('addresses.checkout');
+    Route::post('addresses/validate', [App\Http\Controllers\AddressController::class, 'validateAddress'])->name('addresses.validate');
+});
 
 require __DIR__.'/auth.php';

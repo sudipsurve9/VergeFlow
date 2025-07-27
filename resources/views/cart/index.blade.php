@@ -79,13 +79,12 @@
                                                 <span class="fw-bold fs-5 text-accent">₹{{ number_format($item->total, 2) }}</span>
                                             </td>
                                             <td>
-                                                <form action="{{ route('cart.remove', $item->id) }}" method="POST" class="d-inline" aria-label="Remove {{ $item->product->name }} from cart">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-accent icon-btn-glow" aria-label="Remove {{ $item->product->name }} from cart" onclick="return confirm('Remove this item from cart?')">
-                                                        <i class="fas fa-trash fa-lg"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-accent icon-btn-glow remove-item-btn" 
+                                                        data-item-id="{{ $item->id }}" 
+                                                        data-product-name="{{ $item->product->name }}"
+                                                        aria-label="Remove {{ $item->product->name }} from cart">
+                                                    <i class="fas fa-trash fa-lg"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -352,4 +351,142 @@ input[type="number"]:focus {
     color: #555 !important;
 }
 </style>
-@endsection 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // AJAX Cart Item Removal
+    document.querySelectorAll('.remove-item-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-item-id');
+            const productName = this.getAttribute('data-product-name');
+            
+            // Show confirmation dialog
+            if (!confirm(`Remove "${productName}" from cart?`)) {
+                return;
+            }
+            
+            // Show loading state
+            const originalContent = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin fa-lg"></i>';
+            this.disabled = true;
+            
+            // Make AJAX request
+            fetch(`/cart/ajax/remove/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the row with animation
+                    const row = this.closest('tr');
+                    row.style.transition = 'opacity 0.3s ease-out';
+                    row.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        row.remove();
+                        
+                        // Check if cart is empty and reload if needed
+                        const remainingRows = document.querySelectorAll('.cart-item-row');
+                        if (remainingRows.length === 0) {
+                            location.reload();
+                        } else {
+                            // Update cart count in header if exists
+                            updateCartCount(data.cart_count);
+                            // Recalculate totals
+                            recalculateCartTotals();
+                        }
+                    }, 300);
+                    
+                    // Show success message
+                    showNotification(data.message, 'success');
+                } else {
+                    // Restore button state
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                    
+                    // Show error message
+                    showNotification(data.message || 'Failed to remove item', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Restore button state
+                this.innerHTML = originalContent;
+                this.disabled = false;
+                
+                // Show error message
+                showNotification('An error occurred while removing the item', 'error');
+            });
+        });
+    });
+    
+    // Function to update cart count in header
+    function updateCartCount(count) {
+        const cartCountElements = document.querySelectorAll('.cart-count, [data-cart-count]');
+        cartCountElements.forEach(element => {
+            element.textContent = count;
+        });
+    }
+    
+    // Function to recalculate cart totals
+    function recalculateCartTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('.cart-item-row').forEach(row => {
+            const totalCell = row.querySelector('td:nth-child(4) span');
+            if (totalCell) {
+                const totalText = totalCell.textContent.replace('₹', '').replace(',', '');
+                subtotal += parseFloat(totalText) || 0;
+            }
+        });
+        
+        // Update subtotal and total displays
+        const subtotalElements = document.querySelectorAll('[data-subtotal]');
+        const totalElements = document.querySelectorAll('[data-total]');
+        
+        subtotalElements.forEach(element => {
+            element.textContent = `₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        });
+        
+        totalElements.forEach(element => {
+            element.textContent = `₹${subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        });
+        
+        // Update item count
+        const itemCount = document.querySelectorAll('.cart-item-row').length;
+        const itemCountElements = document.querySelectorAll('[data-item-count]');
+        itemCountElements.forEach(element => {
+            element.textContent = itemCount;
+        });
+    }
+    
+    // Function to show notifications
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+
+@endsection

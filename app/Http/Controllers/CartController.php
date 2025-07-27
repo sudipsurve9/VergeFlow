@@ -73,18 +73,66 @@ class CartController extends Controller
 
     public function remove($id)
     {
-        \Log::info('CartController@remove called', ['id' => $id, 'user_id' => Auth::id()]);
-        $cartItem = $this->getCartItemById($id);
-        
-        if (!$cartItem) {
-            \Log::warning('Cart item not found', ['id' => $id]);
-            return back()->with('error', 'Cart item not found');
+        try {
+            \Log::info('CartController@remove called', ['id' => $id, 'user_id' => Auth::id()]);
+            
+            // Validate ID parameter
+            if (!is_numeric($id) || $id <= 0) {
+                \Log::warning('Invalid cart item ID', ['id' => $id]);
+                if (request()->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Invalid cart item ID'], 400);
+                }
+                return back()->with('error', 'Invalid cart item ID');
+            }
+            
+            $cartItem = $this->getCartItemById($id);
+            
+            if (!$cartItem) {
+                \Log::warning('Cart item not found', ['id' => $id, 'user_id' => Auth::id()]);
+                if (request()->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Cart item not found'], 404);
+                }
+                return back()->with('error', 'Cart item not found');
+            }
+            
+            // Store product name for success message
+            $productName = $cartItem->product->name ?? 'Unknown Product';
+            
+            \Log::info('Deleting cart item', [
+                'cart_item_id' => $cartItem->id,
+                'product_id' => $cartItem->product_id,
+                'product_name' => $productName,
+                'user_id' => Auth::id()
+            ]);
+            
+            $cartItem->delete();
+            
+            \Log::info('Cart item deleted successfully', ['id' => $id, 'product_name' => $productName]);
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "'{$productName}' removed from cart successfully",
+                    'cart_count' => $this->getCartItems()->sum('quantity')
+                ]);
+            }
+            
+            return back()->with('success', "'{$productName}' removed from cart successfully");
+            
+        } catch (\Exception $e) {
+            \Log::error('Error removing cart item', [
+                'id' => $id,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'An error occurred while removing the item'], 500);
+            }
+            
+            return back()->with('error', 'An error occurred while removing the item. Please try again.');
         }
-        
-        \Log::info('Deleting cart item', ['cart_item' => $cartItem->toArray()]);
-        $cartItem->delete();
-        
-        return back()->with('success', 'Item removed from cart successfully');
     }
 
     public function clear()

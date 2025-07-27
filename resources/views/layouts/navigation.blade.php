@@ -41,6 +41,9 @@
                             <a href="{{ route('profile.edit') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <i class="fas fa-user mr-3"></i> My Profile
                             </a>
+                            <a href="{{ route('addresses.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-map-marker-alt mr-3"></i> Address Book
+                            </a>
                             <a href="{{ route('admin.settings.index') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <i class="fas fa-cog mr-3"></i> Settings
                             </a>
