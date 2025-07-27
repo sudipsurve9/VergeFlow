@@ -60,21 +60,29 @@ return new class extends Migration
                 }
             });
             
-            // Add foreign keys if they don't exist
+            // Add foreign keys if they don't exist (simplified approach)
             try {
                 Schema::table('product_reviews', function (Blueprint $table) {
-                    if (!$this->foreignKeyExists('product_reviews', 'product_reviews_user_id_foreign')) {
-                        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-                    }
-                    if (!$this->foreignKeyExists('product_reviews', 'product_reviews_product_id_foreign')) {
-                        $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-                    }
-                    if (!$this->foreignKeyExists('product_reviews', 'product_reviews_order_id_foreign')) {
-                        $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');
-                    }
+                    $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
                 });
             } catch (\Exception $e) {
-                // Foreign keys might already exist, continue
+                // Foreign key might already exist, continue
+            }
+            
+            try {
+                Schema::table('product_reviews', function (Blueprint $table) {
+                    $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+                });
+            } catch (\Exception $e) {
+                // Foreign key might already exist, continue
+            }
+            
+            try {
+                Schema::table('product_reviews', function (Blueprint $table) {
+                    $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');
+                });
+            } catch (\Exception $e) {
+                // Foreign key might already exist, continue
             }
         }
     }
@@ -90,25 +98,5 @@ return new class extends Migration
         }
     }
     
-    /**
-     * Check if foreign key exists
-     */
-    private function foreignKeyExists($table, $keyName)
-    {
-        try {
-            $foreignKeys = Schema::getConnection()
-                ->getDoctrineSchemaManager()
-                ->listTableForeignKeys($table);
-                
-            foreach ($foreignKeys as $foreignKey) {
-                if ($foreignKey->getName() === $keyName) {
-                    return true;
-                }
-            }
-        } catch (\Exception $e) {
-            // If we can't check, assume it doesn't exist
-        }
-        
-        return false;
-    }
+
 };

@@ -50,18 +50,21 @@ return new class extends Migration
                 }
             });
             
-            // Add foreign keys if they don't exist
+            // Add foreign keys if they don't exist (simplified approach)
             try {
                 Schema::table('recently_viewed', function (Blueprint $table) {
-                    if (!$this->foreignKeyExists('recently_viewed', 'recently_viewed_user_id_foreign')) {
-                        $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-                    }
-                    if (!$this->foreignKeyExists('recently_viewed', 'recently_viewed_product_id_foreign')) {
-                        $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-                    }
+                    $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
                 });
             } catch (\Exception $e) {
-                // Foreign keys might already exist, continue
+                // Foreign key might already exist, continue
+            }
+            
+            try {
+                Schema::table('recently_viewed', function (Blueprint $table) {
+                    $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+                });
+            } catch (\Exception $e) {
+                // Foreign key might already exist, continue
             }
         }
     }
@@ -77,21 +80,5 @@ return new class extends Migration
         }
     }
     
-    /**
-     * Check if foreign key exists
-     */
-    private function foreignKeyExists($table, $keyName)
-    {
-        $foreignKeys = Schema::getConnection()
-            ->getDoctrineSchemaManager()
-            ->listTableForeignKeys($table);
-            
-        foreach ($foreignKeys as $foreignKey) {
-            if ($foreignKey->getName() === $keyName) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
+
 };
