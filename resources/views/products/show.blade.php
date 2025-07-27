@@ -119,6 +119,139 @@
         </div>
     </div>
 
+    <!-- Product Reviews Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="section-header text-center mb-4">
+                <h2 class="fw-bold neon-glow section-title">Customer Reviews</h2>
+                @if($product->total_reviews > 0)
+                    <div class="d-flex align-items-center justify-content-center mb-3">
+                        <div class="rating-display me-3">
+                            <span class="rating-stars">{{ $product->rating_stars }}</span>
+                            <span class="rating-number ms-2">{{ number_format($product->average_rating, 1) }} out of 5</span>
+                        </div>
+                        <span class="text-muted">({{ $product->total_reviews }} {{ Str::plural('review', $product->total_reviews) }})</span>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Review Actions -->
+            <div class="text-center mb-4">
+                @auth
+                    @if($canReview)
+                        <a href="{{ route('products.reviews.create', $product) }}" class="btn btn-accent me-2">
+                            <i class="fas fa-star me-2"></i>Write a Review
+                        </a>
+                    @elseif($hasReviewed)
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>You've reviewed this product</span>
+                    @else
+                        <span class="text-muted">Purchase this product to write a review</span>
+                    @endif
+                @else
+                    <a href="{{ route('login') }}" class="btn btn-outline-accent">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login to Write a Review
+                    </a>
+                @endauth
+            </div>
+
+            <!-- Reviews List -->
+            @if(isset($reviews) && $reviews->count() > 0)
+                <div class="reviews-container">
+                    @foreach($reviews as $review)
+                        <div class="review-card theme-card mb-4">
+                            <div class="review-header d-flex justify-content-between align-items-start">
+                                <div class="reviewer-info">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="reviewer-avatar me-3">
+                                            <i class="fas fa-user-circle fa-2x text-accent"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="reviewer-name mb-0">{{ $review->user->name }}</h6>
+                                            @if($review->is_verified_purchase)
+                                                <span class="badge bg-success badge-sm">
+                                                    <i class="fas fa-check-circle me-1"></i>Verified Purchase
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="review-date text-muted small">
+                                    {{ $review->created_at->format('M d, Y') }}
+                                </div>
+                            </div>
+
+                            <div class="review-rating mb-2">
+                                <span class="rating-stars">{{ $review->stars }}</span>
+                                <span class="rating-number ms-2">{{ $review->rating }}/5</span>
+                            </div>
+
+                            <h6 class="review-title fw-bold mb-2">{{ $review->title }}</h6>
+                            <p class="review-text mb-3">{{ $review->review }}</p>
+
+                            @if($review->images && count($review->images) > 0)
+                                <div class="review-images mb-3">
+                                    <div class="row g-2">
+                                        @foreach($review->images as $image)
+                                            <div class="col-auto">
+                                                <img src="{{ Storage::url($image) }}" 
+                                                     alt="Review image" 
+                                                     class="review-image rounded"
+                                                     style="width: 80px; height: 80px; object-fit: cover;">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="review-actions d-flex justify-content-between align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary helpful-btn" 
+                                        data-review-id="{{ $review->id }}">
+                                    <i class="fas fa-thumbs-up me-1"></i>
+                                    Helpful ({{ $review->helpful_count }})
+                                </button>
+                                
+                                @auth
+                                    @if($review->user_id === auth()->id())
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" 
+                                                    data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="{{ route('reviews.edit', $review) }}">
+                                                    <i class="fas fa-edit me-2"></i>Edit
+                                                </a></li>
+                                                <li><a class="dropdown-item text-danger" 
+                                                       href="#" 
+                                                       onclick="deleteReview({{ $review->id }})">
+                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    @endif
+                                @endauth
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <!-- Pagination -->
+                    @if($reviews->hasPages())
+                        <div class="d-flex justify-content-center">
+                            {{ $reviews->links() }}
+                        </div>
+                    @endif
+                </div>
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No reviews yet</h5>
+                    <p class="text-muted">Be the first to review this product!</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
     <!-- Related Products -->
     @if($relatedProducts->count() > 0)
         <div class="row mt-5">
@@ -321,7 +454,91 @@
 [data-theme="light"] .related-products .text-muted {
     color: #555 !important;
 }
+
+/* Review Styles */
+.review-card {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.rating-stars {
+    color: #ffc107;
+    font-size: 1.2rem;
+}
+
+.review-image {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.review-image:hover {
+    transform: scale(1.1);
+}
+
+.helpful-btn {
+    transition: all 0.2s;
+}
+
+.helpful-btn:hover {
+    background-color: var(--accent-color, #FFB300);
+    border-color: var(--accent-color, #FFB300);
+    color: white;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Helpful button functionality
+    document.querySelectorAll('.helpful-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const reviewId = this.dataset.reviewId;
+            
+            fetch(`/reviews/${reviewId}/helpful`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    this.innerHTML = `<i class="fas fa-thumbs-up me-1"></i>Helpful (${data.helpful_count})`;
+                    this.disabled = true;
+                    this.classList.add('btn-success');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+
+// Delete review function
+function deleteReview(reviewId) {
+    if (confirm('Are you sure you want to delete this review?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/reviews/${reviewId}`;
+        
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = '_method';
+        methodInput.value = 'DELETE';
+        
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = '_token';
+        tokenInput.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        form.appendChild(methodInput);
+        form.appendChild(tokenInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 
 <script>
 document.querySelectorAll('.wishlist-btn').forEach(btn => {

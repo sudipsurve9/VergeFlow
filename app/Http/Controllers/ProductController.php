@@ -58,14 +58,53 @@ class ProductController extends Controller
 
     public function show($slug)
     {
-        $product = Product::with('category')->where('slug', $slug)->active()->firstOrFail();
+        $product = Product::with(['category', 'approvedReviews.user'])
+            ->where('slug', $slug)
+            ->active()
+            ->firstOrFail();
+            
+        // Track recently viewed
+        $this->trackRecentlyViewed($product);
+        
         $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->active()
             ->take(4)
             ->get();
             
-        return view('products.show', compact('product', 'relatedProducts'));
+        // Get reviews with pagination
+        $reviews = $product->approvedReviews()
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(5);
+            
+        // Check if user can review this product
+        $canReview = false;
+        $hasReviewed = false;
+        if (auth()->check()) {
+            $hasReviewed = \App\Models\ProductReview::where('user_id', auth()->id())
+                ->where('product_id', $product->id)
+                ->exists();
+                
+            $canReview = !$hasReviewed && \App\Models\Order::where('user_id', auth()->id())
+                ->whereHas('items', function($query) use ($product) {
+                    $query->where('product_id', $product->id);
+                })
+                ->where('status', 'delivered')
+                ->exists();
+        }
+        
+        // Get recently viewed products
+        $recentlyViewed = $this->getRecentlyViewed($product->id);
+            
+        return view('products.show', compact(
+            'product', 
+            'relatedProducts', 
+            'reviews', 
+            'canReview', 
+            'hasReviewed',
+            'recentlyViewed'
+        ));
     }
 
     // Admin methods
@@ -164,5 +203,76 @@ class ProductController extends Controller
         $importer = new \App\Imports\ProductsImport();
         $importer->import($request->file('file'));
         return back()->with('success', 'Products imported successfully!');
+    }
+
+    /**
+     * Track recently viewed products
+     */
+    private function trackRecentlyViewed($product)
+    {
+        if (auth()->check()) {
+            // For logged-in users
+            \App\Models\RecentlyViewed::updateOrCreate(
+                [
+                    'user_id' => auth()->id(),
+                    'product_id' => $product->id
+                ],
+                [
+                    'viewed_at' => now()
+                ]
+            );
+            
+            // Keep only last 20 viewed products
+            $recentCount = \App\Models\RecentlyViewed::where('user_id', auth()->id())->count();
+            if ($recentCount > 20) {
+                $oldestViewed = \App\Models\RecentlyViewed::where('user_id', auth()->id())
+                    ->orderBy('viewed_at', 'asc')
+                    ->take($recentCount - 20)
+                    ->get();
+                \App\Models\RecentlyViewed::destroy($oldestViewed->pluck('id'));
+            }
+        } else {
+            // For guest users (session-based)
+            \App\Models\RecentlyViewed::updateOrCreate(
+                [
+                    'session_id' => session()->getId(),
+                    'product_id' => $product->id
+                ],
+                [
+                    'viewed_at' => now()
+                ]
+            );
+            
+            // Keep only last 10 viewed products for guests
+            $recentCount = \App\Models\RecentlyViewed::where('session_id', session()->getId())->count();
+            if ($recentCount > 10) {
+                $oldestViewed = \App\Models\RecentlyViewed::where('session_id', session()->getId())
+                    ->orderBy('viewed_at', 'asc')
+                    ->take($recentCount - 10)
+                    ->get();
+                \App\Models\RecentlyViewed::destroy($oldestViewed->pluck('id'));
+            }
+        }
+    }
+
+    /**
+     * Get recently viewed products
+     */
+    private function getRecentlyViewed($excludeProductId = null)
+    {
+        $query = \App\Models\RecentlyViewed::with('product')
+            ->recent(8);
+            
+        if (auth()->check()) {
+            $query->forUser(auth()->id());
+        } else {
+            $query->forSession(session()->getId());
+        }
+        
+        if ($excludeProductId) {
+            $query->where('product_id', '!=', $excludeProductId);
+        }
+        
+        return $query->get()->pluck('product')->filter();
     }
 }

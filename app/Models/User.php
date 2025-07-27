@@ -103,6 +103,21 @@ class User extends Authenticatable
         return $this->hasMany(Address::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function recentlyViewed()
+    {
+        return $this->hasMany(RecentlyViewed::class);
+    }
+
     public function scopeForClient($query, $clientId)
     {
         return $query->where('client_id', $clientId);

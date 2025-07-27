@@ -83,4 +83,36 @@ class Product extends Model
     {
         return $this->hasMany(ProductReview::class);
     }
+
+    public function approvedReviews()
+    {
+        return $this->hasMany(ProductReview::class)->approved();
+    }
+
+    public function recentlyViewed()
+    {
+        return $this->hasMany(RecentlyViewed::class);
+    }
+
+    // Rating calculations
+    public function getAverageRatingAttribute()
+    {
+        return $this->approvedReviews()->avg('rating') ?: 0;
+    }
+
+    public function getTotalReviewsAttribute()
+    {
+        return $this->approvedReviews()->count();
+    }
+
+    public function getRatingStarsAttribute()
+    {
+        $rating = round($this->average_rating);
+        return str_repeat('★', $rating) . str_repeat('☆', 5 - $rating);
+    }
+
+    public function getRatingPercentageAttribute()
+    {
+        return ($this->average_rating / 5) * 100;
+    }
 }
