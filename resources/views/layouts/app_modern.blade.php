@@ -623,6 +623,114 @@
             color: var(--accent-color);
         }
 
+        /* Mobile hamburger menu styles */
+        .navbar-toggler {
+            background: var(--accent-color);
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-toggler:hover {
+            background: var(--accent-glow);
+            border-color: var(--accent-glow);
+            transform: scale(1.05);
+        }
+        
+        .navbar-toggler-icon {
+            background-image: none;
+            width: 24px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-toggler-icon::before,
+        .navbar-toggler-icon::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-toggler-icon::before {
+            top: -8px;
+        }
+        
+        .navbar-toggler-icon::after {
+            bottom: -8px;
+        }
+        
+        .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+            background: transparent;
+        }
+        
+        .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
+            transform: rotate(45deg);
+            top: 0;
+        }
+        
+        .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::after {
+            transform: rotate(-45deg);
+            bottom: 0;
+        }
+        
+        /* Mobile navigation menu */
+        #mobileNav {
+            background: var(--secondary-bg);
+            border-top: 2px solid var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        #mobileNav .nav-link {
+            color: var(--text-primary) !important;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        #mobileNav .nav-link:hover,
+        #mobileNav .nav-link.active {
+            background: var(--accent-color);
+            color: white !important;
+            transform: translateX(10px);
+        }
+        
+        /* Mobile navigation additional styles */
+        .mobile-nav-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 10px 0;
+        }
+        
+        .mobile-user-section {
+            padding: 10px 0;
+        }
+        
+        .mobile-user-info {
+            padding: 15px 20px;
+            background: var(--card-bg);
+            color: var(--accent-color);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .mobile-auth-section {
+            padding: 20px;
+        }
+        
+        .mobile-auth-section .btn {
+            font-size: 16px;
+            padding: 12px;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .theme-switcher {
@@ -636,6 +744,16 @@
             
             .navbar-brand span {
                 font-size: 1.5rem !important;
+            }
+            
+            .main-header .col-md-3,
+            .main-header .col-md-6 {
+                margin-bottom: 15px;
+            }
+            
+            .search-form {
+                width: 100%;
+                max-width: none;
             }
         }
 
@@ -836,7 +954,7 @@
                                 <span class="cart-badge" id="cart-count">0</span>
                             </a>
                             <!-- Hamburger for mobile -->
-                            <button class="navbar-toggler d-lg-none ms-3" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-expanded="false" aria-label="Toggle navigation">
+                            <button class="navbar-toggler d-lg-none ms-3" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-expanded="false" aria-label="Toggle navigation menu">
                                 <span class="navbar-toggler-icon"></span>
                             </button>
                         </div>
@@ -844,33 +962,69 @@
                 </div>
             </div>
         </header>
-        <!-- Mobile Navigation Collapse -->
-        <nav class="category-nav d-lg-none" role="navigation" aria-label="Mobile category navigation">
-            <div class="container">
-                <div class="collapse" id="mobileNav">
-                    <div class="d-flex flex-column">
-                        <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
-                        <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">All Products</a>
-                        @foreach($categories ?? [] as $category)
-                            <a href="{{ route('products.index', ['category' => $category->slug]) }}" 
-                               class="nav-link {{ request('category') == $category->slug ? 'active' : '' }}">
-                                {{ $category->name }}
+        <!-- Mobile Navigation Menu -->
+        <div class="d-lg-none">
+            <div class="collapse" id="mobileNav">
+                <nav class="mobile-nav-menu" role="navigation" aria-label="Mobile navigation menu">
+                    <div class="container-fluid">
+                        <div class="mobile-nav-content">
+                            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
+                                <i class="fa-solid fa-home me-2"></i>Home
                             </a>
-                        @endforeach
-                        @auth
-                            <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">My Orders</a>
-                            @if(auth()->user()->role === 'admin')
-                                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->is('admin*') ? 'active' : '' }}">Admin</a>
-                            @endif
-                            @if(auth()->user()->role === 'super_admin')
-                                <a href="{{ route('super_admin.dashboard') }}" class="nav-link {{ request()->is('super-admin*') ? 'active' : '' }}">Super Admin</a>
-                            @endif
-                        @endauth
-                        <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">Profile</a>
+                            <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
+                                <i class="fa-solid fa-box me-2"></i>All Products
+                            </a>
+                            @foreach($categories ?? [] as $category)
+                                <a href="{{ route('products.index', ['category' => $category->slug]) }}" 
+                                   class="nav-link {{ request('category') == $category->slug ? 'active' : '' }}">
+                                    <i class="fa-solid fa-tag me-2"></i>{{ $category->name }}
+                                </a>
+                            @endforeach
+                            
+                            @auth
+                                <div class="mobile-nav-divider"></div>
+                                <div class="mobile-user-section">
+                                    <div class="mobile-user-info">
+                                        <i class="fa-solid fa-user-circle me-2"></i>
+                                        <span>{{ Auth::user()->name }}</span>
+                                    </div>
+                                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-user me-2"></i>Profile
+                                    </a>
+                                    <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
+                                        <i class="fa-solid fa-shopping-bag me-2"></i>My Orders
+                                    </a>
+                                    @if(auth()->user()->role === 'admin')
+                                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->is('admin*') ? 'active' : '' }}">
+                                            <i class="fa-solid fa-cog me-2"></i>Admin Panel
+                                        </a>
+                                    @endif
+                                    @if(auth()->user()->role === 'super_admin')
+                                        <a href="{{ route('super_admin.dashboard') }}" class="nav-link {{ request()->is('super-admin*') ? 'active' : '' }}">
+                                            <i class="fa-solid fa-crown me-2"></i>Super Admin
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('logout') }}" class="nav-link text-danger" 
+                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        <i class="fa-solid fa-sign-out-alt me-2"></i>Logout
+                                    </a>
+                                </div>
+                            @else
+                                <div class="mobile-nav-divider"></div>
+                                <div class="mobile-auth-section">
+                                    <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 mb-2">
+                                        <i class="fa-solid fa-sign-in-alt me-2"></i>Login
+                                    </a>
+                                    <a href="{{ route('register') }}" class="btn btn-primary w-100">
+                                        <i class="fa-solid fa-user-plus me-2"></i>Register
+                                    </a>
+                                </div>
+                            @endauth
+                        </div>
                     </div>
-                </div>
+                </nav>
             </div>
-        </nav>
+        </div>
         <!-- Desktop Navigation -->
         <nav class="category-nav d-none d-lg-block" role="navigation" aria-label="Category navigation">
             <div class="container">
