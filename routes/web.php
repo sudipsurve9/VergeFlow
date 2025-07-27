@@ -16,6 +16,21 @@ use Illuminate\Support\Facades\Auth;
 */
 
 Route::get('/', function () {
+    // Check if user is logged in
+    if (Auth::check()) {
+        $user = Auth::user();
+        
+        // Only redirect regular site users to home page
+        // Admin and Super Admin users should stay on root or go to their dashboards
+        if (!$user->isAdmin() && !$user->isSuperAdmin()) {
+            return redirect()->route('home');
+        }
+        
+        // For admin/super admin users, show the welcome page with their appropriate layout
+        return view('welcome', ['layout' => 'layouts.app_modern']);
+    }
+    
+    // Show welcome page for guests
     return view('welcome', ['layout' => 'layouts.app_modern']);
 });
 
@@ -24,10 +39,10 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile');
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show'])->name('profile');
+    Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::get('/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
 });
 
 Route::middleware(['auth', 'super_admin'])->group(function () {

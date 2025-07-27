@@ -1,29 +1,60 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@extends($layout)
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+@section('content')
+<div class="container py-5" role="main" aria-label="Edit profile main content">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Page Header -->
+            <div class="text-center mb-5">
+                <h1 class="neon-glow mb-3">
+                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                </h1>
+                <p class="text-muted">Manage your account settings and preferences</p>
+            </div>
+
+            <!-- Profile Information Form -->
+            <div class="card premium-card neon-glow mb-4" role="region" aria-label="Profile information">
+                <div class="card-header premium-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Profile Information
+                    </h3>
+                </div>
+                <div class="card-body">
                     @include('profile.partials.update-profile-information-form')
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+            <!-- Password Update Form -->
+            <div class="card premium-card neon-glow mb-4" role="region" aria-label="Password settings">
+                <div class="card-header premium-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-lock me-2"></i>Update Password
+                    </h3>
+                </div>
+                <div class="card-body">
                     @include('profile.partials.update-password-form')
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
+            <!-- Delete Account Form -->
+            <div class="card premium-card neon-glow border-danger" role="region" aria-label="Danger zone">
+                <div class="card-header premium-header bg-danger">
+                    <h3 class="mb-0 text-white">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Danger Zone
+                    </h3>
+                </div>
+                <div class="card-body">
                     @include('profile.partials.delete-user-form')
                 </div>
             </div>
+
+            <!-- Back to Profile Button -->
+            <div class="text-center mt-4">
+                <a href="{{ route('profile') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                </a>
+            </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection
