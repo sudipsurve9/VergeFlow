@@ -18,19 +18,11 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', function () {
     // Check if user is logged in
     if (Auth::check()) {
-        $user = Auth::user();
-        
-        // Only redirect regular site users to home page
-        // Admin and Super Admin users should stay on root or go to their dashboards
-        if (!$user->isAdmin() && !$user->isSuperAdmin()) {
-            return redirect()->route('home');
-        }
-        
-        // For admin/super admin users, show the welcome page with their appropriate layout
-        return view('welcome', ['layout' => 'layouts.app_modern']);
+        // Redirect ALL logged-in users (including admins and super admins) to home page
+        return redirect()->route('home');
     }
     
-    // Show welcome page for guests
+    // Show welcome page for guests only
     return view('welcome', ['layout' => 'layouts.app_modern']);
 });
 

@@ -37,6 +37,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Remember Me Cookie Duration
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the duration (in minutes) for which the "remember me"
+    | cookie will be valid. When users check "Remember Me", they'll stay
+    | logged in for this duration (default: 30 days like Amazon).
+    |
+    */
+
+    'remember_me_duration' => env('REMEMBER_ME_DURATION', 43200), // 30 days
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Encryption
     |--------------------------------------------------------------------------
     |

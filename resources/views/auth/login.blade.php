@@ -20,9 +20,15 @@
                     <div style="color:#ffb300; margin-top:0.2rem; font-size:0.95rem;">{{ $message }}</div>
                 @enderror
         </div>
-            <div class="form-group" style="display:flex; align-items:center; margin-bottom:1.2rem;">
-                <input type="checkbox" name="remember" id="remember" style="margin-right:0.5rem;">
-                <label for="remember" style="margin-bottom:0;">Remember me</label>
+            <div class="form-group remember-me-section" style="margin-bottom:1.2rem;">
+                <div class="remember-me-container">
+                    <input type="checkbox" name="remember" id="remember" class="remember-checkbox">
+                    <label for="remember" class="remember-label">
+                        <span class="checkmark"></span>
+                        <span class="remember-text">Keep me signed in</span>
+                        <small class="remember-subtitle">Stay logged in for 30 days (like Amazon)</small>
+                    </label>
+                </div>
         </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <a href="{{ route('password.request') }}" style="color:#4fc3f7; text-decoration:underline; font-size:0.98rem;">Forgot your password?</a>
@@ -86,6 +92,73 @@
             box-shadow: 0 4px 16px rgba(255, 111, 0, 0.25);
             transform: translateY(-2px) scale(1.03);
             outline: none;
+        }
+        
+        /* Enhanced Remember Me Styling */
+        .remember-me-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .remember-checkbox {
+            display: none;
+        }
+        
+        .remember-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            cursor: pointer;
+            margin-bottom: 0;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffb300;
+            border-radius: 4px;
+            background: transparent;
+            position: relative;
+            flex-shrink: 0;
+            margin-top: 2px;
+            transition: all 0.2s ease;
+        }
+        
+        .remember-checkbox:checked + .remember-label .checkmark {
+            background: linear-gradient(135deg, #ffb300, #ff6f00);
+            border-color: #ffb300;
+        }
+        
+        .remember-checkbox:checked + .remember-label .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .remember-text {
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.3;
+        }
+        
+        .remember-subtitle {
+            display: block;
+            color: #ccc;
+            font-size: 0.8rem;
+            margin-top: 2px;
+            line-height: 1.2;
+        }
+        
+        .remember-label:hover .checkmark {
+            border-color: #fff;
+            box-shadow: 0 0 8px rgba(255, 179, 0, 0.3);
         }
     </style>
 </x-guest-layout>
