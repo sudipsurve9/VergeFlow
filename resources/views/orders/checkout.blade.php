@@ -327,60 +327,67 @@ function toggleStripeSection() {
 paymentRadios.forEach(radio => radio.addEventListener('change', toggleStripeSection));
 toggleStripeSection();
 
+// SIMPLE PHONE AUTO-FILL - DIRECT APPROACH
+function fillPhoneFromAddress() {
+    const shippingSelect = document.getElementById('shipping_address_id');
+    const phoneInput = document.getElementById('phone');
+    
+    if (!shippingSelect || !phoneInput) {
+        console.log('❌ Elements not found');
+        return;
+    }
+    
+    const selectedOption = shippingSelect.options[shippingSelect.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+        const phone = selectedOption.getAttribute('data-phone');
+        console.log('📞 Phone from selected address:', phone);
+        
+        if (phone && phone.trim() !== '' && phone !== 'null') {
+            phoneInput.value = phone;
+            phoneInput.style.backgroundColor = '#d4edda';
+            console.log('✅ PHONE FILLED:', phone);
+            
+            setTimeout(() => {
+                phoneInput.style.backgroundColor = '';
+            }, 2000);
+        } else {
+            console.log('❌ No phone data found');
+        }
+    }
+}
+
 // Address selection functionality
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded - Starting address selection setup');
+    console.log('🚀 Starting phone auto-fill setup');
     const shippingSelect = document.getElementById('shipping_address_id');
     const billingSelect = document.getElementById('billing_address_id');
     const sameAsShippingCheckbox = document.getElementById('same_as_shipping');
     const billingSection = document.getElementById('billing-address-section');
     const phoneInput = document.getElementById('phone');
     
-    console.log('Elements found:', {
-        shippingSelect: !!shippingSelect,
-        phoneInput: !!phoneInput,
-        shippingSelectValue: shippingSelect?.value
-    });
+    // Fill phone immediately if address is pre-selected
+    fillPhoneFromAddress();
     
     // Handle shipping address selection
     if (shippingSelect) {
         shippingSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             const preview = document.getElementById('shipping-address-preview');
-            const details = document.getElementById('shipping-address-details');
             
-            if (selectedOption.value) {
+            // Auto-fill phone immediately when address changes
+            fillPhoneFromAddress();
+            
+            if (selectedOption && selectedOption.value) {
                 const address = selectedOption.getAttribute('data-address');
-                const phone = selectedOption.getAttribute('data-phone');
                 
-                details.innerHTML = address;
-                preview.style.display = 'block';
-                
-                // Show phone in preview if available
-                const phoneDetails = document.getElementById('shipping-phone-details');
-                const phoneNumber = document.getElementById('shipping-phone-number');
-                if (phone && phone.trim() !== '') {
-                    phoneNumber.textContent = phone;
-                    phoneDetails.style.display = 'block';
-                } else {
-                    phoneDetails.style.display = 'none';
-                }
-                
-                // Auto-fill phone if available
-                console.log('Phone data from address:', phone); // Debug log
-                if (phone && phone.trim() !== '' && phone !== 'null' && phoneInput) {
-                    phoneInput.value = phone;
-                    console.log('Phone auto-filled:', phone); // Debug log
-                    // Add visual feedback for auto-filled phone
-                    phoneInput.classList.add('border-success');
-                    setTimeout(() => {
-                        phoneInput.classList.remove('border-success');
-                    }, 2000);
-                } else {
-                    console.log('Phone not available or empty:', phone); // Debug log
-                    if (phoneInput) {
-                        phoneInput.value = '';
-                    }
+                if (address) {
+                    preview.innerHTML = `
+                        <div class="alert alert-info">
+                            <strong>Selected Address:</strong><br>
+                            ${address}
+                        </div>
+                    `;
+                    preview.style.display = 'block';
                 }
                 
                 // If "same as shipping" is checked, update billing
