@@ -38,6 +38,7 @@
                                                  data-phone="{{ $address->phone ?? '' }}"
                                                  data-debug-phone="{{ $address->phone ? 'HAS_PHONE' : 'NO_PHONE' }}">
                                             {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->postal_code }}
+                                            @if($address->phone) [Phone: {{ $address->phone }}] @endif
                                             @if($address->is_default_shipping) (Default) @endif
                                         </option>
                                     @endforeach
