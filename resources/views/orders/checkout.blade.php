@@ -217,7 +217,7 @@
                             <strong class="text-accent price-glow">₹{{ number_format($total, 2) }}</strong>
                         </div>
 
-                        <button type="submit" class="btn btn-accent w-100 btn-lg checkout-glow" aria-label="Place order and complete checkout" onclick="debugOrderSubmission()">
+                        <button type="submit" class="btn btn-accent w-100 btn-lg checkout-glow" aria-label="Place order and complete checkout" onclick="return validateAndSubmitOrder()">
                             <i class="fas fa-lock"></i> Place Order
                         </button>
                         
@@ -398,53 +398,109 @@ function fillPhoneFromAddressCore(shippingSelect, phoneInput) {
     }
 }
 
-// ORDER SUBMISSION DEBUG FUNCTION
-function debugOrderSubmission() {
-    console.log('🚨 ORDER SUBMISSION DEBUG STARTED');
+// COMPREHENSIVE ORDER VALIDATION AND SUBMISSION
+function validateAndSubmitOrder() {
+    console.log('🚀 VALIDATING AND SUBMITTING ORDER');
     
-    // Check form elements
+    // Get form elements
     const form = document.querySelector('form[action*="orders.store"]');
     const shippingSelect = document.getElementById('shipping_address_id');
     const billingSelect = document.getElementById('billing_address_id');
     const phoneInput = document.getElementById('phone');
-    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
     
-    console.log('📋 Form Elements:', {
-        form: !!form,
-        shippingSelect: !!shippingSelect,
-        billingSelect: !!billingSelect,
-        phoneInput: !!phoneInput,
-        paymentMethods: paymentMethods.length
-    });
-    
-    // Check form values
-    const shippingValue = shippingSelect?.value;
-    const billingValue = billingSelect?.value;
-    const phoneValue = phoneInput?.value;
-    const selectedPayment = document.querySelector('input[name="payment_method"]:checked')?.value;
-    
-    console.log('📊 Form Values:', {
-        shipping_address_id: shippingValue,
-        billing_address_id: billingValue,
-        phone: phoneValue,
-        payment_method: selectedPayment
-    });
-    
-    // Check validation requirements
-    const validationIssues = [];
-    if (!shippingValue) validationIssues.push('Missing shipping address');
-    if (!billingValue) validationIssues.push('Missing billing address');
-    if (!phoneValue || phoneValue.trim() === '') validationIssues.push('Missing phone number');
-    if (!selectedPayment) validationIssues.push('Missing payment method');
-    
-    if (validationIssues.length > 0) {
-        console.log('❌ VALIDATION ISSUES:', validationIssues);
-        alert('❌ Order Submission Issues:\n' + validationIssues.join('\n'));
-        return false;
-    } else {
-        console.log('✅ ALL VALIDATION PASSED - SUBMITTING ORDER');
-        return true;
+    // 1. ENSURE PHONE NUMBER IS FILLED
+    if (!phoneInput.value || phoneInput.value.trim() === '') {
+        console.log('📞 Attempting to auto-fill phone number');
+        fillPhoneFromAddress();
+        
+        // If still empty after auto-fill, try to get from selected address
+        if (!phoneInput.value || phoneInput.value.trim() === '') {
+            const selectedShippingOption = shippingSelect.options[shippingSelect.selectedIndex];
+            const phoneFromAddress = selectedShippingOption?.getAttribute('data-phone');
+            
+            if (phoneFromAddress && phoneFromAddress !== 'null' && phoneFromAddress.trim() !== '') {
+                phoneInput.value = phoneFromAddress;
+                console.log('✅ Phone auto-filled from address:', phoneFromAddress);
+            } else {
+                // Prompt user for phone number
+                const userPhone = prompt('Please enter your phone number to complete the order:');
+                if (userPhone && userPhone.trim() !== '') {
+                    phoneInput.value = userPhone.trim();
+                } else {
+                    alert('❌ Phone number is required to place the order.');
+                    return false;
+                }
+            }
+        }
     }
+    
+    // 2. ENSURE PAYMENT METHOD IS SELECTED
+    let selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+    if (!selectedPayment) {
+        // Auto-select COD as default
+        const codOption = document.getElementById('cod');
+        if (codOption) {
+            codOption.checked = true;
+            selectedPayment = codOption;
+            console.log('✅ Auto-selected COD payment method');
+        }
+    }
+    
+    // 3. ENSURE ADDRESSES ARE SELECTED
+    if (!shippingSelect.value) {
+        alert('❌ Please select a shipping address.');
+        shippingSelect.focus();
+        return false;
+    }
+    
+    if (!billingSelect.value) {
+        // Auto-select same as shipping if available
+        if (shippingSelect.value) {
+            billingSelect.value = shippingSelect.value;
+            console.log('✅ Auto-selected billing address same as shipping');
+        } else {
+            alert('❌ Please select a billing address.');
+            billingSelect.focus();
+            return false;
+        }
+    }
+    
+    // 4. FINAL VALIDATION CHECK
+    const finalValidation = {
+        shipping_address_id: shippingSelect.value,
+        billing_address_id: billingSelect.value,
+        phone: phoneInput.value,
+        payment_method: selectedPayment?.value
+    };
+    
+    console.log('📊 Final validation values:', finalValidation);
+    
+    const missingFields = [];
+    if (!finalValidation.shipping_address_id) missingFields.push('Shipping Address');
+    if (!finalValidation.billing_address_id) missingFields.push('Billing Address');
+    if (!finalValidation.phone || finalValidation.phone.trim() === '') missingFields.push('Phone Number');
+    if (!finalValidation.payment_method) missingFields.push('Payment Method');
+    
+    if (missingFields.length > 0) {
+        alert('❌ Missing required fields:\n' + missingFields.join('\n'));
+        return false;
+    }
+    
+    // 5. SUBMIT THE FORM
+    console.log('✅ ALL VALIDATION PASSED - SUBMITTING ORDER');
+    
+    // Show loading state
+    const submitButton = document.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Order...';
+    submitButton.disabled = true;
+    
+    // Allow form submission
+    setTimeout(() => {
+        form.submit();
+    }, 100);
+    
+    return true;
 }
 
 // MULTIPLE EXECUTION ATTEMPTS FOR PHONE AUTO-FILL
