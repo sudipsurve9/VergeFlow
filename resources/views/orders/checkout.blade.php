@@ -327,46 +327,114 @@ function toggleStripeSection() {
 paymentRadios.forEach(radio => radio.addEventListener('change', toggleStripeSection));
 toggleStripeSection();
 
-// SIMPLE PHONE AUTO-FILL - DIRECT APPROACH
+// AGGRESSIVE PHONE AUTO-FILL - MULTIPLE APPROACHES
 function fillPhoneFromAddress() {
-    const shippingSelect = document.getElementById('shipping_address_id');
-    const phoneInput = document.getElementById('phone');
+    console.log('🔥 AGGRESSIVE PHONE AUTO-FILL STARTING');
+    
+    // Try multiple selectors to find elements
+    const shippingSelect = document.getElementById('shipping_address_id') || document.querySelector('select[name="shipping_address_id"]');
+    const phoneInput = document.getElementById('phone') || document.querySelector('input[name="phone"]');
+    
+    console.log('📍 Elements found:', {
+        shippingSelect: !!shippingSelect,
+        phoneInput: !!phoneInput,
+        shippingSelectValue: shippingSelect?.value
+    });
     
     if (!shippingSelect || !phoneInput) {
-        console.log('❌ Elements not found');
+        console.log('❌ Elements not found - trying alternative approach');
+        
+        // Try alternative approach with timeout
+        setTimeout(() => {
+            const altShipping = document.querySelector('#shipping_address_id');
+            const altPhone = document.querySelector('#phone');
+            if (altShipping && altPhone) {
+                console.log('🔄 Retry successful - elements found');
+                fillPhoneFromAddressCore(altShipping, altPhone);
+            }
+        }, 1000);
         return;
     }
     
-    const selectedOption = shippingSelect.options[shippingSelect.selectedIndex];
-    if (selectedOption && selectedOption.value) {
+    fillPhoneFromAddressCore(shippingSelect, phoneInput);
+}
+
+function fillPhoneFromAddressCore(shippingSelect, phoneInput) {
+    const selectedIndex = shippingSelect.selectedIndex;
+    console.log('📊 Selected index:', selectedIndex);
+    
+    if (selectedIndex > 0) {
+        const selectedOption = shippingSelect.options[selectedIndex];
+        console.log('📋 Selected option:', selectedOption);
+        
         const phone = selectedOption.getAttribute('data-phone');
-        console.log('📞 Phone from selected address:', phone);
+        console.log('📞 Phone from data attribute:', phone);
         
         if (phone && phone.trim() !== '' && phone !== 'null') {
             phoneInput.value = phone;
-            phoneInput.style.backgroundColor = '#d4edda';
-            console.log('✅ PHONE FILLED:', phone);
+            phoneInput.style.backgroundColor = '#28a745';
+            phoneInput.style.color = 'white';
+            phoneInput.style.fontWeight = 'bold';
+            
+            console.log('✅ PHONE SUCCESSFULLY FILLED:', phone);
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.innerHTML = '✅ Phone auto-filled: ' + phone;
+            successMsg.style.cssText = 'position:fixed;top:10px;right:10px;background:#28a745;color:white;padding:10px;border-radius:5px;z-index:9999;';
+            document.body.appendChild(successMsg);
             
             setTimeout(() => {
                 phoneInput.style.backgroundColor = '';
-            }, 2000);
+                phoneInput.style.color = '';
+                phoneInput.style.fontWeight = '';
+                document.body.removeChild(successMsg);
+            }, 3000);
         } else {
-            console.log('❌ No phone data found');
+            console.log('❌ No valid phone data found:', phone);
         }
+    } else {
+        console.log('⚠️ No address selected (index 0)');
     }
+}
+
+// MULTIPLE EXECUTION ATTEMPTS FOR PHONE AUTO-FILL
+function executePhoneAutoFill() {
+    console.log('🚀 EXECUTING PHONE AUTO-FILL ATTEMPTS');
+    
+    // Attempt 1: Immediate
+    fillPhoneFromAddress();
+    
+    // Attempt 2: After 500ms
+    setTimeout(() => {
+        console.log('🔄 Attempt 2: 500ms delay');
+        fillPhoneFromAddress();
+    }, 500);
+    
+    // Attempt 3: After 1000ms
+    setTimeout(() => {
+        console.log('🔄 Attempt 3: 1000ms delay');
+        fillPhoneFromAddress();
+    }, 1000);
+    
+    // Attempt 4: After 2000ms
+    setTimeout(() => {
+        console.log('🔄 Attempt 4: 2000ms delay');
+        fillPhoneFromAddress();
+    }, 2000);
 }
 
 // Address selection functionality
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Starting phone auto-fill setup');
+    console.log('🚀 DOM LOADED - Starting phone auto-fill setup');
     const shippingSelect = document.getElementById('shipping_address_id');
     const billingSelect = document.getElementById('billing_address_id');
     const sameAsShippingCheckbox = document.getElementById('same_as_shipping');
     const billingSection = document.getElementById('billing-address-section');
     const phoneInput = document.getElementById('phone');
     
-    // Fill phone immediately if address is pre-selected
-    fillPhoneFromAddress();
+    // Execute multiple phone auto-fill attempts
+    executePhoneAutoFill();
     
     // Handle shipping address selection
     if (shippingSelect) {
