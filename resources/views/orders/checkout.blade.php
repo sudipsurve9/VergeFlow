@@ -328,11 +328,18 @@ toggleStripeSection();
 
 // Address selection functionality
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Starting address selection setup');
     const shippingSelect = document.getElementById('shipping_address_id');
     const billingSelect = document.getElementById('billing_address_id');
     const sameAsShippingCheckbox = document.getElementById('same_as_shipping');
     const billingSection = document.getElementById('billing-address-section');
     const phoneInput = document.getElementById('phone');
+    
+    console.log('Elements found:', {
+        shippingSelect: !!shippingSelect,
+        phoneInput: !!phoneInput,
+        shippingSelectValue: shippingSelect?.value
+    });
     
     // Handle shipping address selection
     if (shippingSelect) {
@@ -390,25 +397,53 @@ document.addEventListener('DOMContentLoaded', function() {
             shippingSelect.dispatchEvent(new Event('change'));
         }
         
-        // Also trigger on page load after a small delay to ensure DOM is ready
-        setTimeout(() => {
-            if (shippingSelect.value && phoneInput) {
-                console.log('Delayed trigger for phone auto-fill');
-                const selectedOption = shippingSelect.options[shippingSelect.selectedIndex];
-                if (selectedOption) {
-                    const phone = selectedOption.getAttribute('data-phone');
-                    console.log('Phone from delayed trigger:', phone);
-                    if (phone && phone.trim() !== '' && phone !== 'null') {
-                        phoneInput.value = phone;
-                        console.log('Phone auto-filled via delayed trigger:', phone);
-                        phoneInput.classList.add('border-success');
-                        setTimeout(() => {
-                            phoneInput.classList.remove('border-success');
-                        }, 2000);
-                    }
-                }
+        // Simple direct approach - force phone auto-fill
+        function forcePhoneAutoFill() {
+            console.log('=== FORCE PHONE AUTO-FILL DEBUG ===');
+            console.log('Shipping select element:', shippingSelect);
+            console.log('Phone input element:', phoneInput);
+            
+            if (!shippingSelect || !phoneInput) {
+                console.log('ERROR: Missing elements!');
+                return;
             }
-        }, 500);
+            
+            const selectedIndex = shippingSelect.selectedIndex;
+            console.log('Selected index:', selectedIndex);
+            
+            if (selectedIndex > 0) {
+                const selectedOption = shippingSelect.options[selectedIndex];
+                console.log('Selected option:', selectedOption);
+                console.log('Option attributes:', {
+                    value: selectedOption.value,
+                    'data-phone': selectedOption.getAttribute('data-phone'),
+                    'data-debug-phone': selectedOption.getAttribute('data-debug-phone'),
+                    innerHTML: selectedOption.innerHTML
+                });
+                
+                const phone = selectedOption.getAttribute('data-phone');
+                console.log('Phone value retrieved:', phone, typeof phone);
+                
+                if (phone) {
+                    phoneInput.value = phone;
+                    phoneInput.style.backgroundColor = '#d4edda'; // Green background
+                    console.log('✅ PHONE FILLED:', phone);
+                    
+                    setTimeout(() => {
+                        phoneInput.style.backgroundColor = '';
+                    }, 3000);
+                } else {
+                    console.log('❌ NO PHONE DATA FOUND');
+                }
+            } else {
+                console.log('No address selected');
+            }
+        }
+        
+        // Try multiple times to ensure it works
+        setTimeout(forcePhoneAutoFill, 100);
+        setTimeout(forcePhoneAutoFill, 500);
+        setTimeout(forcePhoneAutoFill, 1000);
     }
     
     // Handle billing address selection
