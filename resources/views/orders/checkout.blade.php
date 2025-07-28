@@ -217,7 +217,7 @@
                             <strong class="text-accent price-glow">₹{{ number_format($total, 2) }}</strong>
                         </div>
 
-                        <button type="submit" class="btn btn-accent w-100 btn-lg checkout-glow" aria-label="Place order and complete checkout">
+                        <button type="submit" class="btn btn-accent w-100 btn-lg checkout-glow" aria-label="Place order and complete checkout" onclick="debugOrderSubmission()">
                             <i class="fas fa-lock"></i> Place Order
                         </button>
                         
@@ -395,6 +395,55 @@ function fillPhoneFromAddressCore(shippingSelect, phoneInput) {
         }
     } else {
         console.log('⚠️ No address selected (index 0)');
+    }
+}
+
+// ORDER SUBMISSION DEBUG FUNCTION
+function debugOrderSubmission() {
+    console.log('🚨 ORDER SUBMISSION DEBUG STARTED');
+    
+    // Check form elements
+    const form = document.querySelector('form[action*="orders.store"]');
+    const shippingSelect = document.getElementById('shipping_address_id');
+    const billingSelect = document.getElementById('billing_address_id');
+    const phoneInput = document.getElementById('phone');
+    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+    
+    console.log('📋 Form Elements:', {
+        form: !!form,
+        shippingSelect: !!shippingSelect,
+        billingSelect: !!billingSelect,
+        phoneInput: !!phoneInput,
+        paymentMethods: paymentMethods.length
+    });
+    
+    // Check form values
+    const shippingValue = shippingSelect?.value;
+    const billingValue = billingSelect?.value;
+    const phoneValue = phoneInput?.value;
+    const selectedPayment = document.querySelector('input[name="payment_method"]:checked')?.value;
+    
+    console.log('📊 Form Values:', {
+        shipping_address_id: shippingValue,
+        billing_address_id: billingValue,
+        phone: phoneValue,
+        payment_method: selectedPayment
+    });
+    
+    // Check validation requirements
+    const validationIssues = [];
+    if (!shippingValue) validationIssues.push('Missing shipping address');
+    if (!billingValue) validationIssues.push('Missing billing address');
+    if (!phoneValue || phoneValue.trim() === '') validationIssues.push('Missing phone number');
+    if (!selectedPayment) validationIssues.push('Missing payment method');
+    
+    if (validationIssues.length > 0) {
+        console.log('❌ VALIDATION ISSUES:', validationIssues);
+        alert('❌ Order Submission Issues:\n' + validationIssues.join('\n'));
+        return false;
+    } else {
+        console.log('✅ ALL VALIDATION PASSED - SUBMITTING ORDER');
+        return true;
     }
 }
 

@@ -45,7 +45,7 @@ Route::middleware(['auth', 'super_admin'])->group(function () {
     Route::get('/super-admin/clients/create', [App\Http\Controllers\SuperAdminController::class, 'createClient'])->name('super_admin.clients.create');
     Route::post('/super-admin/clients', [App\Http\Controllers\SuperAdminController::class, 'storeClient'])->name('super_admin.clients.store');
     Route::get('/super-admin/clients/{client}/edit', [App\Http\Controllers\SuperAdminController::class, 'editClient'])->name('super_admin.clients.edit');
-    Route::post('/super-admin/clients/{client}', [App\Http\Controllers\SuperAdminController::class, 'updateClient'])->name('super_admin.clients.update');
+    Route::put('/super-admin/clients/{client}', [App\Http\Controllers\SuperAdminController::class, 'updateClient'])->name('super_admin.clients.update');
     Route::post('/super-admin/clients/{client}/delete', [App\Http\Controllers\SuperAdminController::class, 'deleteClient'])->name('super_admin.clients.delete');
 
     // Super Admin User Management
