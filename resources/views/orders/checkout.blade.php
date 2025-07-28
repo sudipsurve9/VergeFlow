@@ -35,7 +35,8 @@
                                         <option value="{{ $address->id }}" 
                                                 {{ (old('shipping_address_id') == $address->id || ($defaultShippingAddress && $defaultShippingAddress->id == $address->id)) ? 'selected' : '' }}
                                                 data-address="{{ $address->getFormattedAddress() }}"
-                                                data-phone="{{ $address->phone }}">
+                                                 data-phone="{{ $address->phone ?? '' }}"
+                                                 data-debug-phone="{{ $address->phone ? 'HAS_PHONE' : 'NO_PHONE' }}">
                                             {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->postal_code }}
                                             @if($address->is_default_shipping) (Default) @endif
                                         </option>
@@ -358,16 +359,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Auto-fill phone if available
-                if (phone && phone.trim() !== '' && phoneInput) {
+                console.log('Phone data from address:', phone); // Debug log
+                if (phone && phone.trim() !== '' && phone !== 'null' && phoneInput) {
                     phoneInput.value = phone;
+                    console.log('Phone auto-filled:', phone); // Debug log
                     // Add visual feedback for auto-filled phone
                     phoneInput.classList.add('border-success');
                     setTimeout(() => {
                         phoneInput.classList.remove('border-success');
                     }, 2000);
-                } else if (phoneInput && !phoneInput.value) {
-                    // Clear phone input if no phone in address
-                    phoneInput.value = '';
+                } else {
+                    console.log('Phone not available or empty:', phone); // Debug log
+                    if (phoneInput) {
+                        phoneInput.value = '';
+                    }
                 }
                 
                 // If "same as shipping" is checked, update billing
@@ -381,8 +386,29 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Trigger change event if there's a pre-selected value
         if (shippingSelect.value) {
+            console.log('Triggering change event for pre-selected address:', shippingSelect.value);
             shippingSelect.dispatchEvent(new Event('change'));
         }
+        
+        // Also trigger on page load after a small delay to ensure DOM is ready
+        setTimeout(() => {
+            if (shippingSelect.value && phoneInput) {
+                console.log('Delayed trigger for phone auto-fill');
+                const selectedOption = shippingSelect.options[shippingSelect.selectedIndex];
+                if (selectedOption) {
+                    const phone = selectedOption.getAttribute('data-phone');
+                    console.log('Phone from delayed trigger:', phone);
+                    if (phone && phone.trim() !== '' && phone !== 'null') {
+                        phoneInput.value = phone;
+                        console.log('Phone auto-filled via delayed trigger:', phone);
+                        phoneInput.classList.add('border-success');
+                        setTimeout(() => {
+                            phoneInput.classList.remove('border-success');
+                        }, 2000);
+                    }
+                }
+            }
+        }, 500);
     }
     
     // Handle billing address selection

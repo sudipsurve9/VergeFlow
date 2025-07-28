@@ -34,6 +34,11 @@ return new class extends Migration
             if (!Schema::hasColumn('addresses', 'is_verified')) {
                 $table->boolean('is_verified')->default(false)->after('address_type');
             }
+            
+            // Ensure phone column exists
+            if (!Schema::hasColumn('addresses', 'phone')) {
+                $table->string('phone')->nullable()->after('name');
+            }
         });
         
         // Handle type field modification separately
