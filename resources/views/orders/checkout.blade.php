@@ -36,7 +36,7 @@
                                                 {{ (old('shipping_address_id') == $address->id || ($defaultShippingAddress && $defaultShippingAddress->id == $address->id)) ? 'selected' : '' }}
                                                 data-address="{{ $address->getFormattedAddress() }}"
                                                 data-phone="{{ $address->phone }}">
-                                            {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->pincode }}
+                                            {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->postal_code }}
                                             @if($address->is_default_shipping) (Default) @endif
                                         </option>
                                     @endforeach
@@ -156,8 +156,8 @@
                                         <option value="{{ $address->id }}" 
                                                 {{ (old('billing_address_id') == $address->id || ($defaultBillingAddress && $defaultBillingAddress->id == $address->id)) ? 'selected' : '' }}
                                                 data-address="{{ $address->getFormattedAddress() }}">
-                                            {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->pincode }}
-                                            @if($address->is_default_billing) (Default) @endif
+                                             {{ $address->label }} - {{ $address->address_line1 }}, {{ $address->city }} - {{ $address->postal_code }}
+                                             @if($address->is_default_billing) (Default) @endif
                                         </option>
                                     @endforeach
                                 </select>
