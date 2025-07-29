@@ -113,16 +113,18 @@ class SuperAdminController extends Controller
 
     public function deleteClient(Client $client)
     {
-        // Delete all related data
+        // Delete all related data (only from tables that have client_id column)
         $client->users()->delete();
         $client->products()->delete();
         $client->categories()->delete();
         $client->orders()->delete();
         $client->customers()->delete();
-        $client->settings()->delete();
-        $client->banners()->delete();
-        $client->pages()->delete();
         $client->coupons()->delete();
+        
+        // Note: The following tables are global and don't have client_id columns:
+        // - settings (global application settings)
+        // - banners (global banners)
+        // - pages (global pages)
 
         $client->delete();
 

@@ -59,20 +59,10 @@ class Client extends Model
         return $this->hasMany(Customer::class);
     }
 
-    public function settings()
-    {
-        return $this->hasMany(Setting::class);
-    }
-
-    public function banners()
-    {
-        return $this->hasMany(Banner::class);
-    }
-
-    public function pages()
-    {
-        return $this->hasMany(Page::class);
-    }
+    // Note: The following are global application features, not client-specific:
+    // - Settings: Use the 'settings' JSON column for client-specific configuration
+    // - Banners: Global banners don't belong to specific clients
+    // - Pages: Global pages (like terms, privacy) are shared across all clients
 
     public function coupons()
     {
