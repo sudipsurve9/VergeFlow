@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Add Address Modal</title>
+    <script>
+        // Test the Add Address modal functionality
+        function testAddressModal() {
+            console.log('🧪 Testing Add Address Modal in Browser');
+            
+            // Try to find and click the Add Address button
+            const addButtons = document.querySelectorAll('button[aria-label*="Add"], button:contains("Add New Address"), button:contains("Add Your First Address")');
+            console.log('Found buttons:', addButtons.length);
+            
+            // Look for buttons with specific text
+            const allButtons = document.querySelectorAll('button');
+            let addButton = null;
+            
+            allButtons.forEach(btn => {
+                const text = btn.textContent.trim();
+                console.log('Button text:', text);
+                if (text.includes('Add New Address') || text.includes('Add Your First Address')) {
+                    addButton = btn;
+                    console.log('✅ Found Add Address button:', text);
+                }
+            });
+            
+            if (addButton) {
+                console.log('🖱️ Clicking Add Address button...');
+                addButton.click();
+                
+                // Check if modal opened
+                setTimeout(() => {
+                    const modal = document.getElementById('addressModal');
+                    if (modal) {
+                        const isVisible = modal.classList.contains('show') || modal.style.display === 'block';
+                        console.log('Modal visibility:', isVisible);
+                        
+                        if (isVisible) {
+                            console.log('✅ Modal opened successfully!');
+                            
+                            // Test form fields
+                            const nameField = document.getElementById('name');
+                            const phoneField = document.getElementById('phone');
+                            const addressField = document.getElementById('address_line1');
+                            
+                            console.log('Name field:', nameField ? '✅ Found' : '❌ Missing');
+                            console.log('Phone field:', phoneField ? '✅ Found' : '❌ Missing');
+                            console.log('Address field:', addressField ? '✅ Found' : '❌ Missing');
+                            
+                            // Fill test data
+                            if (nameField) nameField.value = 'Test User';
+                            if (phoneField) phoneField.value = '1234567890';
+                            if (addressField) addressField.value = 'Test Address Line 1';
+                            
+                            console.log('✅ Test data filled in form');
+                            
+                        } else {
+                            console.log('❌ Modal did not open');
+                        }
+                    } else {
+                        console.log('❌ Modal element not found');
+                    }
+                }, 500);
+                
+            } else {
+                console.log('❌ Add Address button not found');
+            }
+        }
+        
+        // Run test when page loads
+        window.addEventListener('load', () => {
+            setTimeout(testAddressModal, 2000);
+        });
+    </script>
+</head>
+<body>
+    <h1>Testing Add Address Modal</h1>
+    <p>Check console for test results...</p>
+    <script>
+        // Inject this script into the address page
+        const script = document.createElement('script');
+        script.textContent = `
+            console.log('🧪 Starting Add Address Modal Test');
+            
+            // Function to simulate clicking Add Address button
+            function simulateAddAddressClick() {
+                console.log('🔍 Looking for Add Address buttons...');
+                
+                // Method 1: Look for buttons with specific aria-labels
+                let button = document.querySelector('button[aria-label*="Add new address"]');
+                if (!button) {
+                    button = document.querySelector('button[aria-label*="Add your first address"]');
+                }
+                
+                // Method 2: Look for buttons containing "Add" text
+                if (!button) {
+                    const buttons = Array.from(document.querySelectorAll('button'));
+                    button = buttons.find(btn => 
+                        btn.textContent.includes('Add New Address') || 
+                        btn.textContent.includes('Add Your First Address')
+                    );
+                }
+                
+                if (button) {
+                    console.log('✅ Found Add Address button:', button.textContent.trim());
+                    console.log('🖱️ Simulating click...');
+                    
+                    // Trigger click event
+                    button.click();
+                    
+                    // Check if modal appears
+                    setTimeout(() => {
+                        const modal = document.getElementById('addressModal');
+                        if (modal) {
+                            const modalInstance = bootstrap.Modal.getInstance(modal);
+                            const isShown = modal.classList.contains('show');
+                            
+                            console.log('Modal element found:', !!modal);
+                            console.log('Modal is shown:', isShown);
+                            console.log('Modal classes:', modal.className);
+                            
+                            if (isShown) {
+                                console.log('🎉 SUCCESS: Add Address modal opened!');
+                                
+                                // Test form fields
+                                const fields = ['name', 'phone', 'address_line1', 'city', 'state', 'postal_code'];
+                                fields.forEach(fieldId => {
+                                    const field = document.getElementById(fieldId);
+                                    console.log(\`Field \${fieldId}:\`, field ? '✅ Present' : '❌ Missing');
+                                });
+                                
+                                // Test save button
+                                const saveBtn = document.getElementById('saveAddressBtn');
+                                console.log('Save button:', saveBtn ? '✅ Present' : '❌ Missing');
+                                
+                            } else {
+                                console.log('❌ FAILED: Modal did not open');
+                                console.log('Modal display style:', modal.style.display);
+                                console.log('Modal computed display:', getComputedStyle(modal).display);
+                            }
+                        } else {
+                            console.log('❌ FAILED: Modal element not found');
+                        }
+                    }, 1000);
+                    
+                } else {
+                    console.log('❌ FAILED: Add Address button not found');
+                    console.log('Available buttons:');
+                    document.querySelectorAll('button').forEach((btn, index) => {
+                        console.log(\`  \${index}: "\${btn.textContent.trim()}" (aria-label: "\${btn.getAttribute('aria-label') || 'none'}")\`);
+                    });
+                }
+            }
+            
+            // Run the test
+            if (document.readyState === 'complete') {
+                setTimeout(simulateAddAddressClick, 1000);
+            } else {
+                window.addEventListener('load', () => {
+                    setTimeout(simulateAddAddressClick, 1000);
+                });
+            }
+        `;
+        
+        // Try to inject into the current page if it's the address page
+        if (window.location.pathname === '/addresses') {
+            document.head.appendChild(script);
+        }
+    </script>
+</body>
+</html>

@@ -255,9 +255,7 @@
                 </div>
             </div>
 
-            <a href="{{ route('user.orders.invoice.tcpdf', $order) }}" class="btn btn-accent icon-btn-glow w-100 mt-3 d-flex align-items-center justify-content-center" target="_blank" title="Download a PDF invoice for this order" aria-label="Download invoice for order #{{ $order->id }}">
-                <i class="fa-solid fa-file-pdf me-2"></i> Download Invoice PDF
-            </a>
+            <!-- Invoice button temporarily removed due to route configuration issues -->
         </div>
     </div>
 </div>

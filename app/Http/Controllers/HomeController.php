@@ -28,7 +28,8 @@ class HomeController extends Controller
         if (!auth()->check()) {
             return view('welcome');
         }
-        $categories = Category::withCount('products')->active()->take(6)->get();
+        // Get categories without active scope since categories table doesn't have is_active column
+        $categories = Category::withCount('products')->take(6)->get();
         $featuredProducts = Product::with('category')
             ->where('is_featured', true)
             ->orWhere('sale_price', '>', 0)

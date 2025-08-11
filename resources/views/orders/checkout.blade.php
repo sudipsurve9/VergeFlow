@@ -8,6 +8,30 @@
         </div>
     </div>
 
+    <!-- Error Display Section -->
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <h5><i class="fas fa-exclamation-triangle"></i> Please fix the following errors:</h5>
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger">
+            <i class="fas fa-times-circle"></i> {{ session('error') }}
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> {{ session('success') }}
+        </div>
+    @endif
+
     <form action="{{ route('orders.store') }}" method="POST" aria-label="Checkout form">
         @csrf
         <div class="row">

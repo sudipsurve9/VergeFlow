@@ -4,20 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasClientDatabase;
 
 class Address extends Model
 {
-    use HasFactory;
+    use HasFactory, HasClientDatabase;
 
     protected $fillable = [
         'user_id',
         'type',
+        'usage_type',
         'label',
-        'name',
+        'first_name',
+        'last_name',
+        'company',
         'phone',
-        'email',
-        'address_line1',
-        'address_line2',
+        'address_line_1',
+        'address_line_2',
         'landmark',
         'city',
         'state',
@@ -26,7 +29,6 @@ class Address extends Model
         'is_default_shipping',
         'is_default_billing',
         'delivery_instructions',
-        'address_type',
         'is_verified',
     ];
 
@@ -35,6 +37,42 @@ class Address extends Model
         'is_default_billing' => 'boolean',
         'is_verified' => 'boolean',
     ];
+
+    // Accessor for name field (combines first_name and last_name)
+    public function getNameAttribute()
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
+    }
+
+    // Mutator for name field (splits into first_name and last_name)
+    public function setNameAttribute($value)
+    {
+        $nameParts = explode(' ', trim($value), 2);
+        $this->first_name = $nameParts[0] ?? '';
+        $this->last_name = $nameParts[1] ?? '';
+    }
+
+    // Compatibility accessors for address_line1 and address_line2
+    public function getAddressLine1Attribute()
+    {
+        return $this->attributes['address_line_1'] ?? null;
+    }
+
+    public function getAddressLine2Attribute()
+    {
+        return $this->attributes['address_line_2'] ?? null;
+    }
+
+    // Compatibility mutators for address_line1 and address_line2
+    public function setAddressLine1Attribute($value)
+    {
+        $this->attributes['address_line_1'] = $value;
+    }
+
+    public function setAddressLine2Attribute($value)
+    {
+        $this->attributes['address_line_2'] = $value;
+    }
 
     // Address type constants
     const TYPE_HOME = 'home';

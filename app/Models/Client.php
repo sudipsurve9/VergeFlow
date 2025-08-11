@@ -9,6 +9,14 @@ class Client extends Model
 {
     use HasFactory;
 
+    /**
+     * The connection name for the model.
+     * Clients are global and should always use the main database.
+     *
+     * @var string
+     */
+    protected $connection = 'main';
+
     protected $fillable = [
         'name',
         'domain',

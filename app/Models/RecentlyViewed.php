@@ -9,6 +9,8 @@ class RecentlyViewed extends Model
 {
     use HasFactory;
 
+    protected $table = 'recently_viewed';
+
     protected $fillable = [
         'user_id',
         'product_id',

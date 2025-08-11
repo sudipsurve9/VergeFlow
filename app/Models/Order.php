@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\MultiTenant;
 use App\Models\ProductReview;
-use App\Traits\HasClientScope;
 
 class Order extends Model
 {
-    use HasFactory, HasClientScope;
+    use HasFactory, MultiTenant;
 
     protected $fillable = [
         'user_id',

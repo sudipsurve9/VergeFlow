@@ -28,7 +28,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrap();
         View::composer('*', function ($view) {
-            $layout = Setting::where('key', 'site_layout')->value('value') ?? 'layouts.app_modern';
+            // Always use main database for global settings
+            $layout = Setting::on('main')->where('key', 'site_layout')->value('value') ?? 'layouts.app_modern';
             $view->with('layout', $layout);
         });
     }

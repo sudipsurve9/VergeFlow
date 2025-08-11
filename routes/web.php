@@ -37,17 +37,24 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('super_admin.dashboard');
+    });
+    Route::get('/dashboard', [App\Http\Controllers\SuperAdminController::class, 'dashboard'])->name('super_admin.dashboard');
+    Route::get('/clients', [App\Http\Controllers\SuperAdminController::class, 'clients'])->name('super_admin.clients.index');
+    Route::get('/clients/create', [App\Http\Controllers\SuperAdminController::class, 'createClient'])->name('super_admin.clients.create');
+    Route::post('/clients', [App\Http\Controllers\SuperAdminController::class, 'storeClient'])->name('super_admin.clients.store');
+    Route::get('/clients/{client}/edit', [App\Http\Controllers\SuperAdminController::class, 'editClient'])->name('super_admin.clients.edit');
+    Route::put('/clients/{client}', [App\Http\Controllers\SuperAdminController::class, 'updateClient'])->name('super_admin.clients.update');
+    Route::delete('/clients/{client}', [App\Http\Controllers\SuperAdminController::class, 'deleteClient'])->name('super_admin.clients.delete');
+    
+    // Analytics Dashboard routes
+    Route::get('/analytics', [App\Http\Controllers\AnalyticsDashboardController::class, 'index'])->name('analytics.dashboard');
+    Route::get('/analytics/export', [App\Http\Controllers\AnalyticsDashboardController::class, 'exportCsv'])->name('analytics.export');
+});
+
 Route::middleware(['auth', 'super_admin'])->group(function () {
-    Route::get('/super-admin', [App\Http\Controllers\SuperAdminController::class, 'dashboard'])->name('super_admin.dashboard');
-
-    // Super Admin Client Management
-    Route::get('/super-admin/clients', [App\Http\Controllers\SuperAdminController::class, 'clients'])->name('super_admin.clients.index');
-    Route::get('/super-admin/clients/create', [App\Http\Controllers\SuperAdminController::class, 'createClient'])->name('super_admin.clients.create');
-    Route::post('/super-admin/clients', [App\Http\Controllers\SuperAdminController::class, 'storeClient'])->name('super_admin.clients.store');
-    Route::get('/super-admin/clients/{client}/edit', [App\Http\Controllers\SuperAdminController::class, 'editClient'])->name('super_admin.clients.edit');
-    Route::put('/super-admin/clients/{client}', [App\Http\Controllers\SuperAdminController::class, 'updateClient'])->name('super_admin.clients.update');
-    Route::delete('/super-admin/clients/{client}', [App\Http\Controllers\SuperAdminController::class, 'deleteClient'])->name('super_admin.clients.delete');
-
     // Super Admin User Management
     Route::get('/super-admin/users', [App\Http\Controllers\SuperAdminController::class, 'users'])->name('super_admin.users.index');
     Route::get('/super-admin/users/create', [App\Http\Controllers\SuperAdminController::class, 'createUser'])->name('super_admin.users.create');
@@ -100,6 +107,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/reviews/{review}', [App\Http\Controllers\ProductReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::post('/reviews/{review}/helpful', [App\Http\Controllers\ProductReviewController::class, 'markHelpful'])->name('reviews.helpful');
     Route::get('/profile/reviews', [App\Http\Controllers\ProductReviewController::class, 'myReviews'])->name('profile.reviews');
+});
+
+// User order invoice routes
+Route::middleware('auth')->group(function () {
+    Route::get('/orders/{order}/invoice/tcpdf', [App\Http\Controllers\OrderController::class, 'tcpdfInvoice'])->name('user.orders.invoice.tcpdf');
 });
 
 // Admin order invoice routes

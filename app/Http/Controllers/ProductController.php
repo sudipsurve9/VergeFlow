@@ -15,12 +15,10 @@ class ProductController extends Controller
     {
         $clientId = auth()->check() ? auth()->user()->client_id : 
             (\App\Models\Client::where('name', 'Vault64')->value('id'));
-        $query = Product::with('category')->active()->where('client_id', $clientId);
+        $query = Product::with('category')->where('client_id', $clientId);
         
         if ($request->category) {
-            $query->whereHas('category', function($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
+            $query->where('category_id', $request->category);
         }
         
         if ($request->search) {
@@ -51,16 +49,15 @@ class ProductController extends Controller
         }
         
         $products = $query->paginate(12);
-        $categories = Category::active()->where('client_id', $clientId)->get();
+        $categories = Category::where('client_id', $clientId)->get();
         
         return view('products.index', compact('products', 'categories'));
     }
 
-    public function show($slug)
+    public function show($id)
     {
         $product = Product::with(['category', 'approvedReviews.user'])
-            ->where('slug', $slug)
-            ->active()
+            ->where('id', $id)
             ->firstOrFail();
             
         // Track recently viewed
@@ -68,7 +65,6 @@ class ProductController extends Controller
         
         $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->active()
             ->take(4)
             ->get();
             

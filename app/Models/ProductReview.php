@@ -49,7 +49,7 @@ class ProductReview extends Model
     // Scopes
     public function scopeApproved($query)
     {
-        return $query->where('is_approved', true);
+        return $query->where('status', 'approved');
     }
 
     public function scopeVerifiedPurchase($query)

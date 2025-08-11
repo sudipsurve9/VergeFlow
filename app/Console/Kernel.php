@@ -8,6 +8,22 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     /**
+     * The Artisan commands provided by your application.
+     *
+     * @var array
+     */
+    protected $commands = [
+        Commands\MigrateToMultiTenant::class,
+        Commands\SetupClientDatabases::class,
+        Commands\FixClientDatabaseColumns::class,
+        Commands\CleanupMainDatabase::class,
+        Commands\RemoveClientTablesFromMain::class,
+        Commands\TestSuperAdminPortal::class,
+        Commands\CheckClients::class,
+        Commands\CheckClientDatabase::class,
+        Commands\CheckTableStructure::class,
+    ];
+    /**
      * Define the application's command schedule.
      *
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule

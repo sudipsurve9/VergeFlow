@@ -178,10 +178,16 @@
                             <input type="text" id="label" name="label" class="form-control theme-input" placeholder="e.g., Mom's House, Office Building">
                         </div>
 
-                        <!-- Name -->
+                        <!-- First Name -->
                         <div class="col-md-6">
-                            <label for="name" class="form-label text-accent fw-bold">Full Name *</label>
-                            <input type="text" id="name" name="name" required class="form-control theme-input">
+                            <label for="first_name" class="form-label text-accent fw-bold">First Name *</label>
+                            <input type="text" id="first_name" name="first_name" required class="form-control theme-input">
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label text-accent fw-bold">Last Name *</label>
+                            <input type="text" id="last_name" name="last_name" required class="form-control theme-input">
                         </div>
 
                         <!-- Phone -->
@@ -192,14 +198,14 @@
 
                         <!-- Address Line 1 -->
                         <div class="col-12">
-                            <label for="address_line1" class="form-label text-accent fw-bold">Address Line 1 *</label>
-                            <input type="text" id="address_line1" name="address_line1" required class="form-control theme-input" placeholder="House/Flat number, Building name">
+                            <label for="address_line_1" class="form-label text-accent fw-bold">Address Line 1 *</label>
+                            <input type="text" id="address_line_1" name="address_line_1" required class="form-control theme-input" placeholder="House/Flat number, Building name">
                         </div>
 
                         <!-- Address Line 2 -->
                         <div class="col-12">
-                            <label for="address_line2" class="form-label text-accent fw-bold">Address Line 2 (Optional)</label>
-                            <input type="text" id="address_line2" name="address_line2" class="form-control theme-input" placeholder="Street, Area">
+                            <label for="address_line_2" class="form-label text-accent fw-bold">Address Line 2 (Optional)</label>
+                            <input type="text" id="address_line_2" name="address_line_2" class="form-control theme-input" placeholder="Street, Area">
                         </div>
 
                         <!-- Landmark -->
@@ -363,10 +369,11 @@ function editAddress(id) {
             // Populate form fields
             if (data.address) {
                 document.getElementById('label').value = data.address.label || '';
-                document.getElementById('name').value = data.address.name || '';
+                document.getElementById('first_name').value = data.address.first_name || '';
+                document.getElementById('last_name').value = data.address.last_name || '';
                 document.getElementById('phone').value = data.address.phone || '';
-                document.getElementById('address_line1').value = data.address.address_line1 || '';
-                document.getElementById('address_line2').value = data.address.address_line2 || '';
+                document.getElementById('address_line_1').value = data.address.address_line_1 || '';
+                document.getElementById('address_line_2').value = data.address.address_line_2 || '';
                 document.getElementById('landmark').value = data.address.landmark || '';
                 document.getElementById('city').value = data.address.city || '';
                 document.getElementById('state').value = data.address.state || '';
@@ -408,7 +415,7 @@ function submitAddressForm() {
     const submitText = document.getElementById('submitText');
     
     // Validate required fields
-    const requiredFields = ['name', 'phone', 'address_line1', 'city', 'state', 'postal_code', 'country'];
+    const requiredFields = ['first_name', 'last_name', 'phone', 'address_line_1', 'city', 'state', 'postal_code', 'country'];
     let isValid = true;
     
     requiredFields.forEach(fieldName => {
@@ -433,12 +440,16 @@ function submitAddressForm() {
     // Submit form
     const formData = new FormData(form);
     
+    // Add CSRF token to form data
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    formData.append('_token', csrfToken);
+    
     fetch(form.action, {
         method: 'POST',
         body: formData,
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': csrfToken
         }
     })
     .then(response => response.json())

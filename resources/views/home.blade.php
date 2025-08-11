@@ -34,7 +34,7 @@
                             <i class="fas fa-tags fa-3x text-accent mb-3"></i>
                             <h5 class="product-title">{{ $category->name }}</h5>
                             <p class="text-muted">{{ $category->products_count ?? 0 }} products</p>
-                            <a href="{{ route('products.index', ['category' => $category->slug]) }}" class="btn btn-accent category-btn" aria-label="View products in {{ $category->name }} category">View Products</a>
+                            <a href="{{ route('products.index', ['category' => $category->id]) }}" class="btn btn-accent category-btn" aria-label="View products in {{ $category->name }} category">View Products</a>
                         </div>
                     </div>
                 </div>
@@ -77,7 +77,7 @@
                     @endif
                             </div>
                             <div class="d-grid">
-                                <a href="{{ route('products.show', $product->slug) }}" class="btn btn-accent checkout-glow" aria-label="View details for {{ $product->name }}">View Details</a>
+                                <a href="{{ route('products.show', $product->id) }}" class="btn btn-accent checkout-glow" aria-label="View details for {{ $product->name }}">View Details</a>
                             </div>
                         </div>
                     </div>
