@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\MultiTenant;
 
 class OrderStatusHistory extends Model
 {
-    use HasFactory;
+    use HasFactory, MultiTenant;
 
     protected $fillable = [
         'order_id',

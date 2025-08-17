@@ -56,6 +56,7 @@ trait MultiTenant
             'App\Models\Category', 
             'App\Models\Order',
             'App\Models\OrderItem',
+            'App\Models\OrderStatusHistory',
             'App\Models\CartItem',
             'App\Models\Customer',
             'App\Models\Coupon',

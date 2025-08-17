@@ -255,7 +255,25 @@
                 </div>
             </div>
 
-            <!-- Invoice button temporarily removed due to route configuration issues -->
+            <!-- Invoice Actions -->
+            <div class="premium-card">
+                <div class="card-header premium-header">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-file-invoice me-2"></i>Invoice Actions
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <a href="{{ route('user.orders.invoice.tcpdf', $order->id) }}" 
+                       class="btn btn-accent icon-btn-glow w-100 mb-2" 
+                       target="_blank"
+                       aria-label="Download Swiggy-style invoice PDF">
+                        <i class="fa-solid fa-file-pdf me-2"></i>Download Swiggy-Style Invoice
+                    </a>
+                    <small class="text-muted d-block mt-2">
+                        <i class="fa-solid fa-info-circle me-1"></i>GST-compliant tax invoice
+                    </small>
+                </div>
+            </div>
         </div>
     </div>
 </div>

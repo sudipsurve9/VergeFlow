@@ -78,27 +78,29 @@ Route::post('/admin/login', [App\Http\Controllers\Auth\AdminLoginController::cla
 Route::post('/admin/logout', [App\Http\Controllers\Auth\AdminLoginController::class, 'logout'])->name('admin.logout');
 
 // Cart routes
-Route::post('/cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
-Route::delete('/cart/remove/{id}', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
-Route::put('/cart/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
+Route::middleware(['client_database'])->group(function () {
+    Route::post('/cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
+    Route::delete('/cart/remove/{id}', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
+    Route::put('/cart/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
 
-// AJAX Cart routes for enhanced user experience
-Route::post('/cart/ajax/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.ajax.add');
-Route::delete('/cart/ajax/remove/{id}', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.ajax.remove');
-Route::put('/cart/ajax/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.ajax.update');
-Route::delete('/cart/ajax/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.ajax.clear');
+    // AJAX Cart routes for enhanced user experience
+    Route::post('/cart/ajax/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.ajax.add');
+    Route::delete('/cart/ajax/remove/{id}', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.ajax.remove');
+    Route::put('/cart/ajax/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.ajax.update');
+    Route::delete('/cart/ajax/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.ajax.clear');
 
-// Checkout route
-Route::post('/checkout', [App\Http\Controllers\OrderController::class, 'processCheckout'])->name('checkout.process');
+    // Checkout route
+    Route::post('/checkout', [App\Http\Controllers\OrderController::class, 'processCheckout'])->name('checkout.process');
 
-// Wishlist routes
-Route::post('/wishlists', [App\Http\Controllers\WishlistController::class, 'store'])->name('wishlists.store');
-Route::delete('/wishlists/{id}', [App\Http\Controllers\WishlistController::class, 'destroy'])->name('wishlists.destroy');
-Route::get('/wishlists', [App\Http\Controllers\WishlistController::class, 'index'])->name('wishlists.index');
+    // Wishlist routes
+    Route::post('/wishlists', [App\Http\Controllers\WishlistController::class, 'store'])->name('wishlists.store');
+    Route::delete('/wishlists/{id}', [App\Http\Controllers\WishlistController::class, 'destroy'])->name('wishlists.destroy');
+    Route::get('/wishlists', [App\Http\Controllers\WishlistController::class, 'index'])->name('wishlists.index');
+});
 
 // Product Review routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'client_database'])->group(function () {
     Route::get('/products/{product}/reviews', [App\Http\Controllers\ProductReviewController::class, 'index'])->name('products.reviews');
     Route::get('/products/{product}/reviews/create', [App\Http\Controllers\ProductReviewController::class, 'create'])->name('products.reviews.create');
     Route::post('/products/{product}/reviews', [App\Http\Controllers\ProductReviewController::class, 'store'])->name('products.reviews.store');
@@ -110,14 +112,14 @@ Route::middleware('auth')->group(function () {
 });
 
 // User order invoice routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'client_database'])->group(function () {
     Route::get('/orders/{order}/invoice/tcpdf', [App\Http\Controllers\OrderController::class, 'tcpdfInvoice'])->name('user.orders.invoice.tcpdf');
 });
 
 // Admin order invoice routes
 Route::get('/admin/orders/{order}/invoice', [App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('admin.orders.invoice');
 Route::get('/admin/orders/{order}/invoice/pdf', [App\Http\Controllers\Admin\OrderController::class, 'invoicePdf'])->name('admin.orders.invoice.pdf');
-Route::get('/admin/orders/{order}/invoice/tcpdf', [App\Http\Controllers\Admin\OrderController::class, 'invoiceTcpdf'])->name('admin.orders.invoice.tcpdf');
+Route::get('/admin/orders/{order}/invoice/tcpdf', [App\Http\Controllers\Admin\OrderController::class, 'tcpdfInvoice'])->name('admin.orders.invoice.tcpdf');
 
 // New routes
 Route::get('/orders/checkout', [App\Http\Controllers\OrderController::class, 'checkout'])->name('orders.checkout');
@@ -188,26 +190,34 @@ Route::middleware(['auth', 'admin', 'client_database'])->prefix('admin')->group(
 });
 
 // Product routes
-Route::get('/products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{product:slug}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
+Route::middleware(['client_database'])->group(function () {
+    Route::get('/products', [App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
+    Route::get('/products/{product:slug}', [App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
+});
 
 // Home route
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::middleware(['client_database'])->group(function () {
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+});
 
 // Orders routes
-Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
-Route::get('/orders/{order}', [App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
-Route::post('/orders/{order}/cancel', [App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
-Route::post('/orders', [App\Http\Controllers\OrderController::class, 'store'])->name('orders.store');
+Route::middleware(['auth', 'client_database'])->group(function () {
+    Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{order}/cancel', [App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::post('/orders', [App\Http\Controllers\OrderController::class, 'store'])->name('orders.store');
+});
 
 // Cart index route
-Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+Route::middleware(['client_database'])->group(function () {
+    Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
+    Route::get('/cart/count', [App\Http\Controllers\CartController::class, 'getCartCount'])->name('cart.count');
+});
 
-// Wishlist destroy route
-Route::delete('/wishlists/{id}', [App\Http\Controllers\WishlistController::class, 'destroy'])->name('wishlists.destroy');
-
-// Cart count route for AJAX/cart badge
-Route::get('/cart/count', [App\Http\Controllers\CartController::class, 'getCartCount'])->name('cart.count');
+// Additional wishlist route (already covered above)
+Route::middleware(['client_database'])->group(function () {
+    Route::delete('/wishlists/{id}', [App\Http\Controllers\WishlistController::class, 'destroy'])->name('wishlists.destroy');
+});
 
 // Smart admin route
 Route::get('/admin', function () {
@@ -223,7 +233,7 @@ Route::get('/admin/login', [App\Http\Controllers\Auth\AdminLoginController::clas
 Route::get('/super-admin/login', [App\Http\Controllers\Auth\SuperAdminLoginController::class, 'showLoginForm'])->name('super_admin.login');
 
 // Address Management Routes (Amazon-style)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'client_database'])->group(function () {
     Route::resource('addresses', App\Http\Controllers\AddressController::class);
     Route::post('addresses/{address}/set-default-shipping', [App\Http\Controllers\AddressController::class, 'setDefaultShipping'])->name('addresses.set-default-shipping');
     Route::post('addresses/{address}/set-default-billing', [App\Http\Controllers\AddressController::class, 'setDefaultBilling'])->name('addresses.set-default-billing');

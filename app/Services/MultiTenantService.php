@@ -112,6 +112,7 @@ class MultiTenantService
             '2025_06_28_143530_create_orders_table.php',
             '2025_06_28_143535_create_order_items_table.php',
             '2025_07_05_075737_add_client_id_to_orders_table.php',
+            '2025_06_30_064823_create_payments_table.php',
             '2025_06_28_143540_create_cart_items_table.php',
             '2025_06_30_065240_create_customers_table.php',
             '2025_07_05_075814_add_client_id_to_customers_table.php',

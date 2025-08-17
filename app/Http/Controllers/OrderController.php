@@ -264,7 +264,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Generate a custom invoice PDF using TCPDF for the user
+     * Generate a Swiggy-style invoice PDF using raw TCPDF commands for the user
      */
     public function tcpdfInvoice(\App\Models\Order $order)
     {
@@ -274,15 +274,236 @@ class OrderController extends Controller
         }
         
         $order->load(['user', 'items.product', 'payment', 'shippingAddress', 'billingAddress']);
-        $pdf = new \TCPDF();
-        $pdf->SetCreator('Vault 64');
-        $pdf->SetAuthor('Vault 64');
-        $pdf->SetTitle('Invoice Order #' . $order->id);
-        $pdf->SetMargins(15, 20, 15);
+        
+        // Create new PDF document
+        $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        
+        // Set document information
+        $pdf->SetCreator('Swiggy Limited');
+        $pdf->SetAuthor('Swiggy Limited');
+        $pdf->SetTitle('Tax Invoice - Order #' . $order->id);
+        $pdf->SetSubject('GST Invoice');
+        
+        // Set default header data
+        $pdf->SetHeaderData('', 0, '', '');
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+        
+        // Set margins
+        $pdf->SetMargins(15, 15, 15);
+        $pdf->SetHeaderMargin(5);
+        $pdf->SetFooterMargin(10);
+        
+        // Set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, 25);
+        
+        // Set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+        
+        // Add a page
         $pdf->AddPage();
-
-        $html = view('admin.orders.tcpdf_invoice', compact('order'))->render();
-        $pdf->writeHTML($html, true, false, true, false, '');
+        
+        // Set font
+        $pdf->SetFont('helvetica', '', 10);
+        
+        // Header Section - Company Logo and Title
+        $pdf->SetFont('helvetica', 'B', 24);
+        $pdf->SetTextColor(255, 87, 34); // Orange color for Swiggy
+        $pdf->Cell(0, 15, 'Swiggy', 0, 1, 'C');
+        
+        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->SetTextColor(0, 0, 0); // Black
+        $pdf->Cell(0, 10, 'TAX INVOICE', 0, 1, 'C');
+        
+        // Add border line
+        $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
+        $pdf->Ln(5);
+        
+        // Invoice Details Section
+        $y_start = $pdf->GetY();
+        
+        // Left column - Invoice From
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->SetXY(15, $y_start);
+        $pdf->Cell(40, 6, 'Invoice From:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->Cell(50, 6, 'Swiggy Limited (formerly known as Bundl', 1, 1, 'L', false);
+        
+        $pdf->SetXY(15, $pdf->GetY());
+        $pdf->Cell(40, 6, '', 1, 0, 'L', false);
+        $pdf->Cell(50, 6, 'Technologies Private Limited)', 1, 1, 'L', false);
+        
+        // PAN
+        $pdf->SetXY(15, $pdf->GetY());
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(40, 6, 'PAN:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->Cell(50, 6, 'AAFCB7706D', 1, 1, 'L', false);
+        
+        // Email ID
+        $pdf->SetXY(15, $pdf->GetY());
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(40, 6, 'Email ID:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->Cell(50, 6, 'invoicing@swiggy.in', 1, 1, 'L', false);
+        
+        // GSTIN
+        $pdf->SetXY(15, $pdf->GetY());
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(40, 6, 'GSTIN:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->Cell(50, 6, '29AAFCB7706D1ZU', 1, 1, 'L', false);
+        
+        // Address
+        $pdf->SetXY(15, $pdf->GetY());
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(40, 12, 'Address:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->MultiCell(50, 6, "No. 55, Sy No 8-14, Ground Floor, I & J Block,\nEmbassy Tech Village, Outer Ring Road,\nDevarabisanahalli, Varthur Hobli, Bengaluru\nEast Taluk, Bengaluru, Karnataka, 560103", 1, 'L', false);
+        
+        // Right column - Invoice To
+        $pdf->SetXY(105, $y_start);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(40, 6, 'Invoice To:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->Cell(50, 6, 'Customer', 1, 1, 'L', false);
+        
+        // Legal Name
+        $pdf->SetXY(105, $y_start + 6);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(40, 6, 'Legal Name:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 8);
+        $customerName = $order->user ? $order->user->name : 'Customer';
+        $pdf->Cell(50, 6, $customerName, 1, 1, 'L', false);
+        
+        // Customer Address
+        $pdf->SetXY(105, $y_start + 12);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(40, 18, 'Address:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        
+        $customerAddress = '';
+        if ($order->billingAddress) {
+            $customerAddress = $order->billingAddress->address_line_1 . "\n";
+            if ($order->billingAddress->address_line_2) {
+                $customerAddress .= $order->billingAddress->address_line_2 . "\n";
+            }
+            $customerAddress .= $order->billingAddress->city . ", " . $order->billingAddress->state . "\n";
+            $customerAddress .= $order->billingAddress->postal_code . ", " . $order->billingAddress->country;
+        } else {
+            $customerAddress = str_replace('<br>', "\n", strip_tags($order->billing_address));
+        }
+        
+        $pdf->MultiCell(50, 6, $customerAddress, 1, 'L', false);
+        
+        // Additional details
+        $current_y = max($pdf->GetY(), $y_start + 30);
+        $pdf->SetXY(15, $current_y);
+        
+        // Category, Transaction Type, etc.
+        $details = [
+            ['Pincode:', '560103', 'Category:', 'B2C'],
+            ['State Code:', '29', 'Transaction Type:', 'REG'],
+            ['Document:', 'INV', 'Invoice Type:', 'RG'],
+            ['Invoice No:', str_pad($order->id, 6, '0', STR_PAD_LEFT) . 'WIMS' . str_pad($order->id, 5, '0', STR_PAD_LEFT), 'Whether Reverse Charges Applicable:', 'No'],
+            ['Date of Invoice:', $order->created_at->format('d-m-Y'), '', '']
+        ];
+        
+        foreach ($details as $row) {
+            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->Cell(40, 6, $row[0], 1, 0, 'L', false);
+            $pdf->SetFont('helvetica', '', 8);
+            $pdf->Cell(50, 6, $row[1], 1, 0, 'L', false);
+            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->Cell(50, 6, $row[2], 1, 0, 'L', false);
+            $pdf->SetFont('helvetica', '', 8);
+            $pdf->Cell(45, 6, $row[3], 1, 1, 'L', false);
+        }
+        
+        $pdf->Ln(5);
+        
+        // Items Table Header
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->SetFillColor(240, 240, 240);
+        $pdf->Cell(15, 8, 'Sr No', 1, 0, 'C', true);
+        $pdf->Cell(60, 8, 'Description', 1, 0, 'C', true);
+        $pdf->Cell(20, 8, 'HSN', 1, 0, 'C', true);
+        $pdf->Cell(25, 8, 'Unit Of Measure', 1, 0, 'C', true);
+        $pdf->Cell(15, 8, 'Quantity', 1, 0, 'C', true);
+        $pdf->Cell(20, 8, 'Unit Price', 1, 0, 'C', true);
+        $pdf->Cell(20, 8, 'Amount(Rs.)', 1, 1, 'C', true);
+        
+        // Items Table Body
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFillColor(255, 255, 255);
+        
+        foreach ($order->items as $index => $item) {
+            $itemTotal = $item->price * $item->quantity;
+            $productName = $item->product->name ?? 'Handling Fees for Order ' . $order->id;
+            
+            $pdf->Cell(15, 6, ($index + 1), 1, 0, 'C', false);
+            $pdf->Cell(60, 6, substr($productName, 0, 40), 1, 0, 'L', false);
+            $pdf->Cell(20, 6, '999799', 1, 0, 'C', false);
+            $pdf->Cell(25, 6, 'OTH', 1, 0, 'C', false);
+            $pdf->Cell(15, 6, $item->quantity, 1, 0, 'C', false);
+            $pdf->Cell(20, 6, number_format($item->price, 2), 1, 0, 'R', false);
+            $pdf->Cell(20, 6, number_format($itemTotal, 2), 1, 1, 'R', false);
+        }
+        
+        // Subtotal
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(155, 6, 'Subtotal', 1, 0, 'R', false);
+        $pdf->Cell(20, 6, number_format($order->subtotal_amount ?? $order->total_amount, 2), 1, 1, 'R', false);
+        
+        $pdf->Ln(5);
+        
+        // Tax Breakdown Section
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 8, 'Tax Breakdown', 0, 1, 'L');
+        
+        $taxAmount = $order->total_amount - ($order->subtotal_amount ?? $order->total_amount);
+        $cgstAmount = $taxAmount / 2;
+        $sgstAmount = $taxAmount / 2;
+        
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(60, 6, 'CGST (9%)', 1, 0, 'L', false);
+        $pdf->Cell(30, 6, number_format($cgstAmount, 2), 1, 1, 'R', false);
+        
+        $pdf->Cell(60, 6, 'SGST/UTGST (9%)', 1, 0, 'L', false);
+        $pdf->Cell(30, 6, number_format($sgstAmount, 2), 1, 1, 'R', false);
+        
+        $pdf->Cell(60, 6, 'State CESS (0%)', 1, 0, 'L', false);
+        $pdf->Cell(30, 6, '0.00', 1, 1, 'R', false);
+        
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(60, 6, 'Total taxes', 1, 0, 'L', false);
+        $pdf->Cell(30, 6, number_format($taxAmount, 2), 1, 1, 'R', false);
+        
+        $pdf->Cell(60, 6, 'Invoice Total', 1, 0, 'L', false);
+        $pdf->Cell(30, 6, number_format($order->total_amount, 2), 1, 1, 'R', false);
+        
+        $pdf->Ln(10);
+        
+        // Amount in Words
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 6, 'Invoice total in words', 0, 1, 'L');
+        $pdf->SetFont('helvetica', '', 9);
+        $amountInWords = ucwords(\App\Helpers\NumberToWords::convert($order->total_amount)) . ' Rupees Only';
+        $pdf->Cell(0, 6, $amountInWords, 0, 1, 'L');
+        
+        $pdf->Ln(10);
+        
+        // Authorized Signature
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(0, 6, 'Authorized Signature', 0, 1, 'R');
+        $pdf->Ln(15);
+        
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->Cell(0, 4, 'Digitally Signed by', 0, 1, 'R');
+        $pdf->Cell(0, 4, 'Swiggy Limited', 0, 1, 'R');
+        $pdf->Cell(0, 4, $order->created_at->format('d-m-Y'), 0, 1, 'R');
+        
+        // Output PDF
         $pdf->Output('invoice_order_' . $order->id . '.pdf', 'I');
         exit;
     }

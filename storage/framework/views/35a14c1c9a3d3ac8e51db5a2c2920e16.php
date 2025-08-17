@@ -1,9 +1,9 @@
-@php
+<?php
 $orderUser = $order->user;
 $shipping = $order->shippingAddress;
 $billing = $order->billingAddress;
 $payment = $order->payment;
-@endphp
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -213,11 +213,12 @@ $payment = $order->payment;
                 <td class="detail-value">AAFCB7706D</td>
                 <td class="detail-label">Legal Name:</td>
                 <td class="detail-value">
-                    @if($orderUser)
-                        {{ $orderUser->name }}
-                    @else
+                    <?php if($orderUser): ?>
+                        <?php echo e($orderUser->name); ?>
+
+                    <?php else: ?>
                         Customer
-                    @endif
+                    <?php endif; ?>
                 </td>
             </tr>
             <tr>
@@ -225,14 +226,16 @@ $payment = $order->payment;
                 <td class="detail-value">invoicing@swiggy.in</td>
                 <td class="detail-label">Address:</td>
                 <td class="detail-value">
-                    @if($billing)
-                        {{ $billing->address_line_1 }}<br>
-                        @if($billing->address_line_2){{ $billing->address_line_2 }}<br>@endif
-                        {{ $billing->city }}, {{ $billing->state }}<br>
-                        {{ $billing->postal_code }}, {{ $billing->country }}
-                    @else
-                        {!! nl2br(e($order->billing_address)) !!}
-                    @endif
+                    <?php if($billing): ?>
+                        <?php echo e($billing->address_line_1); ?><br>
+                        <?php if($billing->address_line_2): ?><?php echo e($billing->address_line_2); ?><br><?php endif; ?>
+                        <?php echo e($billing->city); ?>, <?php echo e($billing->state); ?><br>
+                        <?php echo e($billing->postal_code); ?>, <?php echo e($billing->country); ?>
+
+                    <?php else: ?>
+                        <?php echo nl2br(e($order->billing_address)); ?>
+
+                    <?php endif; ?>
                 </td>
             </tr>
             <tr>
@@ -272,13 +275,13 @@ $payment = $order->payment;
             </tr>
             <tr>
                 <td class="detail-label">Invoice No:</td>
-                <td class="detail-value">{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}WIMS{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
+                <td class="detail-value"><?php echo e(str_pad($order->id, 6, '0', STR_PAD_LEFT)); ?>WIMS<?php echo e(str_pad($order->id, 5, '0', STR_PAD_LEFT)); ?></td>
                 <td class="detail-label"></td>
                 <td class="detail-value"></td>
             </tr>
             <tr>
                 <td class="detail-label">Date of Invoice:</td>
-                <td class="detail-value">{{ $order->created_at->format('d-m-Y') }}</td>
+                <td class="detail-value"><?php echo e($order->created_at->format('d-m-Y')); ?></td>
                 <td class="detail-label"></td>
                 <td class="detail-value"></td>
             </tr>
@@ -300,25 +303,25 @@ $payment = $order->payment;
                 </tr>
             </thead>
             <tbody>
-                @foreach($order->items as $index => $item)
-                @php
+                <?php $__currentLoopData = $order->items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php
                     $itemTotal = $item->price * $item->quantity;
-                @endphp
+                ?>
                 <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td class="description">{{ $item->product->name ?? 'Handling Fees for Order ' . $order->id }}</td>
+                    <td><?php echo e($index + 1); ?></td>
+                    <td class="description"><?php echo e($item->product->name ?? 'Handling Fees for Order ' . $order->id); ?></td>
                     <td>999799</td>
                     <td>OTH</td>
-                    <td>{{ $item->quantity }}</td>
-                    <td>{{ number_format($item->price, 2) }}</td>
-                    <td>{{ number_format($itemTotal, 2) }}</td>
+                    <td><?php echo e($item->quantity); ?></td>
+                    <td><?php echo e(number_format($item->price, 2)); ?></td>
+                    <td><?php echo e(number_format($itemTotal, 2)); ?></td>
                     <td>0.00</td>
-                    <td>{{ number_format($itemTotal, 2) }}</td>
+                    <td><?php echo e(number_format($itemTotal, 2)); ?></td>
                 </tr>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 <tr>
                     <td colspan="8" class="text-right font-bold">Subtotal</td>
-                    <td class="text-right font-bold">{{ number_format($order->subtotal_amount ?? $order->total_amount, 2) }}</td>
+                    <td class="text-right font-bold"><?php echo e(number_format($order->subtotal_amount ?? $order->total_amount, 2)); ?></td>
                 </tr>
             </tbody>
         </table>
@@ -343,12 +346,12 @@ $payment = $order->payment;
                     <div class="tax-row">
                         <span>CGST</span>
                         <span>9%</span>
-                        <span>{{ number_format(($order->total_amount - ($order->subtotal_amount ?? $order->total_amount)) / 2, 2) }}</span>
+                        <span><?php echo e(number_format(($order->total_amount - ($order->subtotal_amount ?? $order->total_amount)) / 2, 2)); ?></span>
                     </div>
                     <div class="tax-row">
                         <span>SGST/UTGST</span>
                         <span>9%</span>
-                        <span>{{ number_format(($order->total_amount - ($order->subtotal_amount ?? $order->total_amount)) / 2, 2) }}</span>
+                        <span><?php echo e(number_format(($order->total_amount - ($order->subtotal_amount ?? $order->total_amount)) / 2, 2)); ?></span>
                     </div>
                     <div class="tax-row">
                         <span>State CESS</span>
@@ -358,12 +361,12 @@ $payment = $order->payment;
                     <div class="tax-row font-bold">
                         <span>Total taxes</span>
                         <span></span>
-                        <span>{{ number_format($order->total_amount - ($order->subtotal_amount ?? $order->total_amount), 2) }}</span>
+                        <span><?php echo e(number_format($order->total_amount - ($order->subtotal_amount ?? $order->total_amount), 2)); ?></span>
                     </div>
                     <div class="tax-row font-bold" style="border-top: 1px solid #000; margin-top: 5px; padding-top: 5px;">
                         <span>Invoice Total</span>
                         <span></span>
-                        <span>{{ number_format($order->total_amount, 2) }}</span>
+                        <span><?php echo e(number_format($order->total_amount, 2)); ?></span>
                     </div>
                 </td>
             </tr>
@@ -374,18 +377,19 @@ $payment = $order->payment;
             <tr>
                 <td class="amount-words">
                     <strong>Invoice total in words</strong><br>
-                    {{ ucwords(\App\Helpers\NumberToWords::convert($order->total_amount)) }} Rupees Only
+                    <?php echo e(ucwords(\App\Helpers\NumberToWords::convert($order->total_amount))); ?> Rupees Only
                 </td>
                 <td class="signature-section">
                     <strong>Authorized Signature</strong><br><br><br>
                     <div style="font-size: 8px;">
                         Digitally Signed by<br>
                         Swiggy Limited<br>
-                        {{ $order->created_at->format('d-m-Y') }}
+                        <?php echo e($order->created_at->format('d-m-Y')); ?>
+
                     </div>
                 </td>
             </tr>
         </table>
     </div>
 </body>
-</html>
+</html><?php /**PATH C:\xampp\htdocs\VergeFlow\resources\views/admin/orders/tcpdf_invoice.blade.php ENDPATH**/ ?>

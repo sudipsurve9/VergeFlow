@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\MultiTenant;
 use App\Models\ProductReview;
+use App\Traits\MultiTenant;
 
 class Order extends Model
 {
@@ -99,4 +99,5 @@ class Order extends Model
     {
         return $this->belongsTo(Address::class, 'billing_address');
     }
+
 }
