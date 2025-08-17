@@ -152,6 +152,14 @@ Route::middleware(['auth', 'admin', 'client_database'])->prefix('admin')->group(
     Route::get('/reviews/analytics', [App\Http\Controllers\Admin\ReviewController::class, 'analytics'])->name('admin.reviews.analytics');
     Route::get('/banners/create', [App\Http\Controllers\Admin\BannerController::class, 'create'])->name('admin.banners.create');
     Route::get('/orders', [App\Http\Controllers\Admin\OrderController::class, 'index'])->name('admin.orders.index');
+    Route::get('/orders/{id}', [App\Http\Controllers\Admin\OrderController::class, 'show'])->name('admin.orders.show');
+    Route::get('/orders/{id}/edit', [App\Http\Controllers\Admin\OrderController::class, 'edit'])->name('admin.orders.edit');
+    Route::put('/orders/{id}/cancel', [App\Http\Controllers\Admin\OrderController::class, 'cancel'])->name('admin.orders.cancel');
+    Route::get('/orders/{id}/invoice', [App\Http\Controllers\Admin\OrderController::class, 'invoice'])->name('admin.orders.invoice');
+    Route::post('/orders/{id}/shiprocket/place', [App\Http\Controllers\Admin\OrderController::class, 'placeShiprocketOrder'])->name('admin.orders.shiprocket.place');
+    Route::post('/orders/{id}/shiprocket/couriers', [App\Http\Controllers\Admin\OrderController::class, 'getShiprocketCouriers'])->name('admin.orders.shiprocket.couriers');
+    Route::put('/orders/{id}/update-status', [App\Http\Controllers\Admin\OrderController::class, 'updateStatus'])->name('admin.orders.update-status');
+    Route::put('/orders/{id}/refund', [App\Http\Controllers\Admin\OrderController::class, 'refund'])->name('admin.orders.refund');
     Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings.index');
     Route::get('/reviews', [App\Http\Controllers\Admin\ReviewController::class, 'index'])->name('admin.reviews.index');
     Route::get('/customers', [App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('admin.customers.index');

@@ -44,6 +44,65 @@
             margin-bottom: 1.5rem;
             text-shadow: 0 0 10px #ff6a00;
         }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            color: #ffb300;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #ff9900;
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ff9900 0%, #ff6a00 100%);
+            border: none;
+            color: #fff;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
+        }
+        .form-link {
+            color: #ffb300;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .form-link:hover {
+            color: #ff9900;
+            text-decoration: underline;
+        }
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .error-message {
+            color: #ff4444;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
     </style>
     </head>
 <body>
@@ -53,10 +112,10 @@
         </a>
         <div class="login-card">
             <div class="login-title">Sign in to VergeFlow</div>
-                <?php echo e($slot); ?>
+            <?php echo e($slot); ?>
 
-            </div>
         </div>
+    </div>
     </body>
 </html>
 <?php /**PATH C:\xampp\htdocs\VergeFlow\resources\views/layouts/guest.blade.php ENDPATH**/ ?>

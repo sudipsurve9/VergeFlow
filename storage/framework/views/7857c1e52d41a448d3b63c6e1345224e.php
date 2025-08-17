@@ -57,7 +57,11 @@
 
             <div class="row">
                 <?php
-                $categories = \App\Models\Category::active()->withCount('products')->take(4)->get();
+                try {
+                    $categories = \App\Models\Category::withCount('products')->take(4)->get();
+                } catch (\Exception $e) {
+                    $categories = collect();
+                }
                 ?>
 
                 <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -90,7 +94,11 @@
 
             <div class="row">
                 <?php
-                $featuredProducts = \App\Models\Product::featured()->active()->with('category')->take(8)->get();
+                try {
+                    $featuredProducts = \App\Models\Product::with('category')->where('is_featured', 1)->take(8)->get();
+                } catch (\Exception $e) {
+                    $featuredProducts = collect();
+                }
                 ?>
 
                 <?php $__currentLoopData = $featuredProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -106,9 +114,15 @@
                             </div>
                             <?php endif; ?>
                             <div class="product-overlay">
+                                <?php if($product->slug): ?>
                                 <a href="<?php echo e(route('products.show', $product->slug)); ?>" class="btn btn-accent btn-sm">
                                     <i class="fas fa-eye"></i> View
                                 </a>
+                                <?php else: ?>
+                                <a href="#" class="btn btn-accent btn-sm disabled">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <?php endif; ?>
                             </div>
                         </div>
 

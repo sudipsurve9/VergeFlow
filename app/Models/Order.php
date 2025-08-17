@@ -10,6 +10,21 @@ use App\Traits\MultiTenant;
 class Order extends Model
 {
     use HasFactory, MultiTenant;
+    
+    /**
+     * Override newQuery to ensure correct database connection
+     */
+    public function newQuery()
+    {
+        // Force use of tenant connection if available
+        if (app()->bound('tenant.connection')) {
+            $this->setConnection(app('tenant.connection'));
+        } elseif (config('database.default') !== 'main') {
+            $this->setConnection(config('database.default'));
+        }
+        
+        return parent::newQuery();
+    }
 
     protected $fillable = [
         'user_id',

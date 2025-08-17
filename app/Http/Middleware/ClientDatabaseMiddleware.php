@@ -32,7 +32,7 @@ class ClientDatabaseMiddleware
 
         // Set client context for database connections
         if ($user->client_id) {
-            $client = Client::find($user->client_id);
+            $client = Client::on('main')->find($user->client_id);
             if ($client && $client->database_name) {
                 session(['current_client_id' => $client->id]);
                 
@@ -41,6 +41,10 @@ class ClientDatabaseMiddleware
                 try {
                     $connectionName = $databaseService->getClientConnection($client);
                     config(['database.default' => $connectionName]);
+                    
+                    // Also set the connection for models using MultiTenant trait
+                    app()->instance('tenant.connection', $connectionName);
+                    
                 } catch (\Exception $e) {
                     \Log::error('Failed to set client database connection: ' . $e->getMessage());
                 }

@@ -15,6 +15,21 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, HasClientScope, MultiTenant;
 
     /**
+     * Override newQuery to ensure correct database connection
+     */
+    public function newQuery()
+    {
+        // Force use of tenant connection if available
+        if (app()->bound('tenant.connection')) {
+            $this->setConnection(app('tenant.connection'));
+        } elseif (config('database.default') !== 'main') {
+            $this->setConnection(config('database.default'));
+        }
+        
+        return parent::newQuery();
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>

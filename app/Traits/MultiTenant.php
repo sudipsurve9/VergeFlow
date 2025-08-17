@@ -30,6 +30,13 @@ trait MultiTenant
      */
     public function setTenantConnection()
     {
+        // Check if tenant connection is already set by middleware
+        if (app()->bound('tenant.connection')) {
+            $tenantConnection = app('tenant.connection');
+            $this->setConnection($tenantConnection);
+            return;
+        }
+        
         $multiTenantService = app(MultiTenantService::class);
         
         // Determine if this model should use client or main database

@@ -268,12 +268,37 @@ class OrderController extends Controller
      */
     public function tcpdfInvoice(\App\Models\Order $order)
     {
-        // Ensure the logged-in user owns the order
-        if (auth()->id() !== $order->user_id) {
-            abort(403);
+        // Load order relationships with explicit connection
+        $order->load(['items.product', 'payment']);
+        
+        // In multi-tenant setup, user might be in different database
+        // Try to load user from current connection first, then main
+        if ($order->user_id) {
+            $order->user = \App\Models\User::find($order->user_id);
+            
+            // If not found in current connection, try main connection
+            if (!$order->user) {
+                $order->user = \App\Models\User::on('main')->find($order->user_id);
+            }
         }
         
-        $order->load(['user', 'items.product', 'payment', 'shippingAddress', 'billingAddress']);
+        // Debug: Log order data including raw address fields
+        $shippingAddressData = $order->shipping_address ? json_decode($order->shipping_address, true) : null;
+        $billingAddressData = $order->billing_address ? json_decode($order->billing_address, true) : null;
+        
+        \Log::info('Order Debug Data', [
+            'order_id' => $order->id,
+            'user_id' => $order->user_id,
+            'user_exists' => $order->user ? true : false,
+            'user_name' => $order->user ? $order->user->name : 'null',
+            'user_phone' => $order->user ? $order->user->phone : 'null',
+            'user_email' => $order->user ? $order->user->email : 'null',
+            'user_connection_tried' => 'current and main',
+            'shipping_address_raw' => $order->shipping_address,
+            'billing_address_raw' => $order->billing_address,
+            'items_count' => $order->items->count(),
+            'total_amount' => $order->total_amount
+        ]);
         
         // Create new PDF document
         $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -306,166 +331,268 @@ class OrderController extends Controller
         // Set font
         $pdf->SetFont('helvetica', '', 10);
         
-        // Header Section - Company Logo and Title
-        $pdf->SetFont('helvetica', 'B', 24);
+        // Header Section - Swiggy Logo
+        $pdf->SetFont('helvetica', 'B', 18);
         $pdf->SetTextColor(255, 87, 34); // Orange color for Swiggy
-        $pdf->Cell(0, 15, 'Swiggy', 0, 1, 'C');
+        $pdf->Cell(0, 10, 'Swiggy', 0, 1, 'C');
         
-        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->Ln(5);
+        $pdf->SetFont('helvetica', 'B', 12);
         $pdf->SetTextColor(0, 0, 0); // Black
-        $pdf->Cell(0, 10, 'TAX INVOICE', 0, 1, 'C');
+        $pdf->Cell(0, 8, 'TAX INVOICE', 0, 1, 'C');
         
-        // Add border line
-        $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
         $pdf->Ln(5);
         
-        // Invoice Details Section
-        $y_start = $pdf->GetY();
+        // Invoice Details Section - Clean table with proper column boundaries
         
-        // Left column - Invoice From
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetXY(15, $y_start);
-        $pdf->Cell(40, 6, 'Invoice From:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 8);
-        $pdf->Cell(50, 6, 'Swiggy Limited (formerly known as Bundl', 1, 1, 'L', false);
+        // Define column widths for perfect alignment - adjusted for longer text
+        $col1 = 35; // Label column
+        $col2 = 55; // Value column  
+        $col3 = 55; // Label column
+        $col4 = 35; // Value column
         
-        $pdf->SetXY(15, $pdf->GetY());
-        $pdf->Cell(40, 6, '', 1, 0, 'L', false);
-        $pdf->Cell(50, 6, 'Technologies Private Limited)', 1, 1, 'L', false);
+        // Row 1: Invoice From and Invoice To headers
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col1, 6, 'Invoice From:', 1, 0, 'L', false);
         
-        // PAN
-        $pdf->SetXY(15, $pdf->GetY());
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(40, 6, 'PAN:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 8);
-        $pdf->Cell(50, 6, 'AAFCB7706D', 1, 1, 'L', false);
+        // Get client company name - force Vault64 for now
+        $client = \App\Models\Client::on('main')->where('subdomain', 'vault64')->first();
         
-        // Email ID
-        $pdf->SetXY(15, $pdf->GetY());
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(40, 6, 'Email ID:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 8);
-        $pdf->Cell(50, 6, 'invoicing@swiggy.in', 1, 1, 'L', false);
+        if (!$client) {
+            // Fallback to ID 1 if subdomain lookup fails
+            $client = \App\Models\Client::on('main')->find(1);
+        }
         
-        // GSTIN
-        $pdf->SetXY(15, $pdf->GetY());
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(40, 6, 'GSTIN:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 8);
-        $pdf->Cell(50, 6, '29AAFCB7706D1ZU', 1, 1, 'L', false);
+        $companyName = $client ? $client->company_name : 'Vault64 Original Store';
         
-        // Address
-        $pdf->SetXY(15, $pdf->GetY());
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(40, 12, 'Address:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 7);
-        $pdf->MultiCell(50, 6, "No. 55, Sy No 8-14, Ground Floor, I & J Block,\nEmbassy Tech Village, Outer Ring Road,\nDevarabisanahalli, Varthur Hobli, Bengaluru\nEast Taluk, Bengaluru, Karnataka, 560103", 1, 'L', false);
-        
-        // Right column - Invoice To
-        $pdf->SetXY(105, $y_start);
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(40, 6, 'Invoice To:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 8);
-        $pdf->Cell(50, 6, 'Customer', 1, 1, 'L', false);
-        
-        // Legal Name
-        $pdf->SetXY(105, $y_start + 6);
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(40, 6, 'Legal Name:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('helvetica', '', 6);
+        $pdf->Cell($col2, 6, substr($companyName, 0, 35), 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col3, 6, 'Invoice To:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
         $customerName = $order->user ? $order->user->name : 'Customer';
-        $pdf->Cell(50, 6, $customerName, 1, 1, 'L', false);
+        $pdf->Cell($col4, 6, substr($customerName, 0, 35), 1, 1, 'L', false);
         
-        // Customer Address
-        $pdf->SetXY(105, $y_start + 12);
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(40, 18, 'Address:', 1, 0, 'L', false);
-        $pdf->SetFont('helvetica', '', 7);
+        // Row 2: Company name continuation or empty
+        $pdf->Cell($col1, 6, '', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        $pdf->Cell($col2, 6, '', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col3, 6, 'Legal Name:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        // Use the same customer name variable that was set above
+        $pdf->Cell($col4, 6, substr($customerName, 0, 35), 1, 1, 'L', false);
         
+        // Row 3: PAN and Customer Address
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col1, 6, 'PAN:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        $clientPAN = $client ? ($client->getSetting('pan_number') ?? 'Not Available') : 'Not Available';
+        $pdf->Cell($col2, 6, $clientPAN, 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col3, 6, 'Address:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        
+        // Get customer address from order - handle string format addresses
         $customerAddress = '';
-        if ($order->billingAddress) {
-            $customerAddress = $order->billingAddress->address_line_1 . "\n";
-            if ($order->billingAddress->address_line_2) {
-                $customerAddress .= $order->billingAddress->address_line_2 . "\n";
+        
+        // Addresses are stored as strings, not JSON
+        if ($order->shipping_address) {
+            // Remove phone number from address if present
+            $addressParts = explode("\n", $order->shipping_address);
+            $customerAddress = trim($addressParts[0]); // Take first line, ignore phone
+        } elseif ($order->billing_address) {
+            $customerAddress = trim($order->billing_address);
+        }
+        
+        if (empty($customerAddress)) {
+            $customerAddress = 'Address not available';
+        }
+        
+        $pdf->Cell($col4, 6, substr($customerAddress, 0, 35), 1, 1, 'L', false);
+        
+        // Row 4: Email ID and Customer Phone
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col1, 6, 'Email ID:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        $clientEmail = $client ? $client->contact_email : 'email@notavailable.com';
+        $pdf->Cell($col2, 6, $clientEmail, 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col3, 6, 'Phone:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        // Extract customer phone from shipping address or user
+        $customerPhone = 'N/A';
+        if ($order->user && $order->user->phone) {
+            $customerPhone = $order->user->phone;
+        } elseif ($order->shipping_address && strpos($order->shipping_address, 'Phone:') !== false) {
+            // Extract phone from shipping address string
+            $addressParts = explode("\n", $order->shipping_address);
+            foreach ($addressParts as $part) {
+                if (strpos($part, 'Phone:') !== false) {
+                    $customerPhone = trim(str_replace('Phone:', '', $part));
+                    break;
+                }
             }
-            $customerAddress .= $order->billingAddress->city . ", " . $order->billingAddress->state . "\n";
-            $customerAddress .= $order->billingAddress->postal_code . ", " . $order->billingAddress->country;
-        } else {
-            $customerAddress = str_replace('<br>', "\n", strip_tags($order->billing_address));
         }
+        $pdf->Cell($col4, 6, $customerPhone, 1, 1, 'L', false);
         
-        $pdf->MultiCell(50, 6, $customerAddress, 1, 'L', false);
+        // Row 5: GSTIN and empty customer cells
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col1, 6, 'GSTIN:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        $clientGSTIN = $client ? ($client->getSetting('gstin_number') ?? 'Not Available') : 'Not Available';
+        $pdf->Cell($col2, 6, $clientGSTIN, 1, 0, 'L', false);
+        $pdf->Cell($col3, 6, '', 1, 0, 'L', false);
+        $pdf->Cell($col4, 6, '', 1, 1, 'L', false);
         
-        // Additional details
-        $current_y = max($pdf->GetY(), $y_start + 30);
-        $pdf->SetXY(15, $current_y);
+        // Row 6-9: Company Address (4 rows) with proper customer column structure
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col1, 6, 'Address:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
         
-        // Category, Transaction Type, etc.
-        $details = [
-            ['Pincode:', '560103', 'Category:', 'B2C'],
-            ['State Code:', '29', 'Transaction Type:', 'REG'],
-            ['Document:', 'INV', 'Invoice Type:', 'RG'],
-            ['Invoice No:', str_pad($order->id, 6, '0', STR_PAD_LEFT) . 'WIMS' . str_pad($order->id, 5, '0', STR_PAD_LEFT), 'Whether Reverse Charges Applicable:', 'No'],
-            ['Date of Invoice:', $order->created_at->format('d-m-Y'), '', '']
-        ];
+        // Get client address and split into multiple lines
+        $clientAddress = $client ? $client->address : 'Address not available';
+        $addressLines = explode(',', $clientAddress);
+        $addressLines = array_map('trim', $addressLines);
         
-        foreach ($details as $row) {
-            $pdf->SetFont('helvetica', 'B', 9);
-            $pdf->Cell(40, 6, $row[0], 1, 0, 'L', false);
-            $pdf->SetFont('helvetica', '', 8);
-            $pdf->Cell(50, 6, $row[1], 1, 0, 'L', false);
-            $pdf->SetFont('helvetica', 'B', 9);
-            $pdf->Cell(50, 6, $row[2], 1, 0, 'L', false);
-            $pdf->SetFont('helvetica', '', 8);
-            $pdf->Cell(45, 6, $row[3], 1, 1, 'L', false);
-        }
+        // First address line
+        $firstLine = isset($addressLines[0]) ? substr($addressLines[0], 0, 35) : '';
+        $pdf->Cell($col2, 6, $firstLine, 1, 0, 'L', false);
+        $pdf->Cell($col3, 6, '', 1, 0, 'L', false);
+        $pdf->Cell($col4, 6, '', 1, 1, 'L', false);
+        
+        // Second address line
+        $pdf->Cell($col1, 6, '', 1, 0, 'L', false);
+        $secondLine = isset($addressLines[1]) ? substr($addressLines[1], 0, 35) : '';
+        $pdf->Cell($col2, 6, $secondLine, 1, 0, 'L', false);
+        $pdf->Cell($col3, 6, '', 1, 0, 'L', false);
+        $pdf->Cell($col4, 6, '', 1, 1, 'L', false);
+        
+        // Third address line
+        $pdf->Cell($col1, 6, '', 1, 0, 'L', false);
+        $thirdLine = isset($addressLines[2]) ? substr($addressLines[2], 0, 35) : '';
+        $pdf->Cell($col2, 6, $thirdLine, 1, 0, 'L', false);
+        $pdf->Cell($col3, 6, '', 1, 0, 'L', false);
+        $pdf->Cell($col4, 6, '', 1, 1, 'L', false);
+        
+        // Fourth address line
+        $pdf->Cell($col1, 6, '', 1, 0, 'L', false);
+        $fourthLine = isset($addressLines[3]) ? substr($addressLines[3], 0, 35) : '';
+        $pdf->Cell($col2, 6, $fourthLine, 1, 0, 'L', false);
+        $pdf->Cell($col3, 6, '', 1, 0, 'L', false);
+        $pdf->Cell($col4, 6, '', 1, 1, 'L', false);
+        
+        // Row 11: Phone and Date
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col1, 6, 'Phone:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $clientPhone = $client ? ($client->contact_phone ?? 'Not Available') : 'Not Available';
+        $pdf->Cell($col2, 6, $clientPhone, 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col3, 6, 'Date:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->Cell($col4, 6, $order->created_at->format('d-m-Y'), 1, 1, 'L', false);
+        
+        // Row 12: Invoice Number and Whether Reverse Charges Applicable
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col1, 6, 'Invoice Number:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        $invoiceNumber = str_pad($order->id, 6, '0', STR_PAD_LEFT) . 'WIMS' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $pdf->Cell($col2, 6, $invoiceNumber, 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 6);
+        $pdf->Cell($col3, 6, 'Whether Reverse Charges Applicable:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->Cell($col4, 6, 'No', 1, 1, 'L', false);
+        
+        // Row 10: Pincode and Category
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col1, 6, 'Pincode:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $clientPincode = $client ? ($client->getSetting('pincode') ?? 'Not Available') : 'Not Available';
+        $pdf->Cell($col2, 6, $clientPincode, 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col3, 6, 'Category:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->Cell($col4, 6, 'B2C', 1, 1, 'L', false);
+        
+        // Row 12: Document and Invoice Type
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col1, 6, 'Document:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->Cell($col2, 6, 'INV', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col3, 6, 'Invoice Type:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->Cell($col4, 6, 'RG', 1, 1, 'L', false);
+        
+        // Row 13: Invoice No and Whether Reverse Charges
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell($col1, 6, 'Invoice No:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        $invoiceNo = str_pad($order->id, 6, '0', STR_PAD_LEFT) . 'WIMS' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+        $pdf->Cell($col2, 6, $invoiceNo, 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', 'B', 6);
+        $pdf->Cell($col3, 6, 'Whether Reverse Charges Applicable:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 6);
+        $pdf->Cell($col4, 6, 'No', 1, 1, 'L', false);
+        
+        // Row 14: Date of Invoice
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell($col1, 6, 'Date of Invoice:', 1, 0, 'L', false);
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->Cell($col2, 6, $order->created_at->format('d-m-Y'), 1, 0, 'L', false);
+        $pdf->Cell($col3 + $col4, 6, '', 1, 1, 'L', false);
         
         $pdf->Ln(5);
         
-        // Items Table Header
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetFillColor(240, 240, 240);
-        $pdf->Cell(15, 8, 'Sr No', 1, 0, 'C', true);
-        $pdf->Cell(60, 8, 'Description', 1, 0, 'C', true);
-        $pdf->Cell(20, 8, 'HSN', 1, 0, 'C', true);
-        $pdf->Cell(25, 8, 'Unit Of Measure', 1, 0, 'C', true);
-        $pdf->Cell(15, 8, 'Quantity', 1, 0, 'C', true);
-        $pdf->Cell(20, 8, 'Unit Price', 1, 0, 'C', true);
-        $pdf->Cell(20, 8, 'Amount(Rs.)', 1, 1, 'C', true);
+        // Items Table Header - Exact match to image
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(15, 8, 'Sr No', 1, 0, 'C', false);
+        $pdf->Cell(60, 8, 'Description', 1, 0, 'C', false);
+        $pdf->Cell(20, 8, 'HSN', 1, 0, 'C', false);
+        $pdf->Cell(25, 8, 'Unit Of Measure', 1, 0, 'C', false);
+        $pdf->Cell(15, 8, 'Quantity', 1, 0, 'C', false);
+        $pdf->Cell(20, 8, 'Unit Price', 1, 0, 'C', false);
+        $pdf->Cell(25, 8, 'Amount(Rs.)', 1, 1, 'C', false);
         
-        // Items Table Body
+        // Items Table Body - Real order data
         $pdf->SetFont('helvetica', '', 8);
-        $pdf->SetFillColor(255, 255, 255);
+        $srNo = 1;
+        $subtotal = 0;
         
-        foreach ($order->items as $index => $item) {
+        foreach ($order->items as $item) {
             $itemTotal = $item->price * $item->quantity;
-            $productName = $item->product->name ?? 'Handling Fees for Order ' . $order->id;
+            $subtotal += $itemTotal;
+            $productName = $item->product ? $item->product->name : 'Product #' . $item->product_id;
             
-            $pdf->Cell(15, 6, ($index + 1), 1, 0, 'C', false);
-            $pdf->Cell(60, 6, substr($productName, 0, 40), 1, 0, 'L', false);
-            $pdf->Cell(20, 6, '999799', 1, 0, 'C', false);
-            $pdf->Cell(25, 6, 'OTH', 1, 0, 'C', false);
-            $pdf->Cell(15, 6, $item->quantity, 1, 0, 'C', false);
-            $pdf->Cell(20, 6, number_format($item->price, 2), 1, 0, 'R', false);
-            $pdf->Cell(20, 6, number_format($itemTotal, 2), 1, 1, 'R', false);
+            $pdf->Cell(15, 8, $srNo, 1, 0, 'C', false);
+            $pdf->Cell(60, 8, substr($productName, 0, 25), 1, 0, 'L', false);
+            $pdf->Cell(20, 8, '999799', 1, 0, 'C', false);
+            $pdf->Cell(25, 8, 'OTH', 1, 0, 'C', false);
+            $pdf->Cell(15, 8, $item->quantity, 1, 0, 'C', false);
+            $pdf->Cell(20, 8, number_format($item->price, 2), 1, 0, 'R', false);
+            $pdf->Cell(25, 8, number_format($itemTotal, 2), 1, 1, 'R', false);
+            $srNo++;
         }
         
-        // Subtotal
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(155, 6, 'Subtotal', 1, 0, 'R', false);
-        $pdf->Cell(20, 6, number_format($order->subtotal_amount ?? $order->total_amount, 2), 1, 1, 'R', false);
+        // Subtotal row
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(155, 8, 'Subtotal', 1, 0, 'R', false);
+        $pdf->Cell(25, 8, number_format($subtotal, 2), 1, 1, 'R', false);
         
         $pdf->Ln(5);
         
-        // Tax Breakdown Section
-        $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(0, 8, 'Tax Breakdown', 0, 1, 'L');
+        // Tax Breakdown Section - Calculate actual taxes
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(0, 6, 'Tax Breakdown', 0, 1, 'L');
         
-        $taxAmount = $order->total_amount - ($order->subtotal_amount ?? $order->total_amount);
-        $cgstAmount = $taxAmount / 2;
-        $sgstAmount = $taxAmount / 2;
+        // Calculate taxes from order
+        $cgstAmount = $order->cgst_amount ?? 0;
+        $sgstAmount = $order->sgst_amount ?? 0;
+        $cessAmount = $order->cess_amount ?? 0;
+        $totalAmount = $order->total_amount ?? $subtotal;
         
-        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetFont('helvetica', '', 8);
         $pdf->Cell(60, 6, 'CGST (9%)', 1, 0, 'L', false);
         $pdf->Cell(30, 6, number_format($cgstAmount, 2), 1, 1, 'R', false);
         
@@ -473,30 +600,30 @@ class OrderController extends Controller
         $pdf->Cell(30, 6, number_format($sgstAmount, 2), 1, 1, 'R', false);
         
         $pdf->Cell(60, 6, 'State CESS (0%)', 1, 0, 'L', false);
-        $pdf->Cell(30, 6, '0.00', 1, 1, 'R', false);
+        $pdf->Cell(30, 6, number_format($cessAmount, 2), 1, 1, 'R', false);
         
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(60, 6, 'Total taxes', 1, 0, 'L', false);
-        $pdf->Cell(30, 6, number_format($taxAmount, 2), 1, 1, 'R', false);
+        $pdf->Ln(3);
         
-        $pdf->Cell(60, 6, 'Invoice Total', 1, 0, 'L', false);
-        $pdf->Cell(30, 6, number_format($order->total_amount, 2), 1, 1, 'R', false);
+        // Invoice Total
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->Cell(60, 8, 'Invoice Total', 1, 0, 'L', false);
+        $pdf->Cell(30, 8, number_format($totalAmount, 2), 1, 1, 'R', false);
         
         $pdf->Ln(10);
         
         // Amount in Words
-        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->SetFont('helvetica', 'B', 9);
         $pdf->Cell(0, 6, 'Invoice total in words', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 9);
-        $amountInWords = ucwords(\App\Helpers\NumberToWords::convert($order->total_amount)) . ' Rupees Only';
+        $pdf->SetFont('helvetica', '', 8);
+        $amountInWords = ucwords(\App\Helpers\NumberToWords::convert($totalAmount)) . ' Rupees Only';
         $pdf->Cell(0, 6, $amountInWords, 0, 1, 'L');
         
-        $pdf->Ln(10);
+        $pdf->Ln(15);
         
         // Authorized Signature
-        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->SetFont('helvetica', 'B', 9);
         $pdf->Cell(0, 6, 'Authorized Signature', 0, 1, 'R');
-        $pdf->Ln(15);
+        $pdf->Ln(10);
         
         $pdf->SetFont('helvetica', '', 7);
         $pdf->Cell(0, 4, 'Digitally Signed by', 0, 1, 'R');

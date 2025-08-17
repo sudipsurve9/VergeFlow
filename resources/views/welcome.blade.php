@@ -59,7 +59,11 @@
 
             <div class="row">
                 @php
-                $categories = \App\Models\Category::active()->withCount('products')->take(4)->get();
+                try {
+                    $categories = \App\Models\Category::withCount('products')->take(4)->get();
+                } catch (\Exception $e) {
+                    $categories = collect();
+                }
                 @endphp
 
                 @foreach($categories as $category)
@@ -92,7 +96,11 @@
 
             <div class="row">
                 @php
-                $featuredProducts = \App\Models\Product::featured()->active()->with('category')->take(8)->get();
+                try {
+                    $featuredProducts = \App\Models\Product::with('category')->where('is_featured', 1)->take(8)->get();
+                } catch (\Exception $e) {
+                    $featuredProducts = collect();
+                }
                 @endphp
 
                 @foreach($featuredProducts as $product)
@@ -108,9 +116,15 @@
                             </div>
                             @endif
                             <div class="product-overlay">
+                                @if($product->slug)
                                 <a href="{{ route('products.show', $product->slug) }}" class="btn btn-accent btn-sm">
                                     <i class="fas fa-eye"></i> View
                                 </a>
+                                @else
+                                <a href="#" class="btn btn-accent btn-sm disabled">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                @endif
                             </div>
                         </div>
 

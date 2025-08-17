@@ -7,12 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\ProductReview;
 use App\Traits\HasClientScope;
 use App\Traits\HasClientDatabase;
+use App\Traits\MultiTenant;
 
 class Product extends Model
 {
-    use HasFactory, HasClientScope, HasClientDatabase {
-        HasClientDatabase::scopeForClient insteadof HasClientScope;
-        HasClientScope::scopeForClient as scopeForClientScope;
+    use HasFactory, MultiTenant;
+    
+    /**
+     * Override newQuery to ensure correct database connection
+     */
+    public function newQuery()
+    {
+        // Force use of tenant connection if available
+        if (app()->bound('tenant.connection')) {
+            $this->setConnection(app('tenant.connection'));
+        } elseif (config('database.default') !== 'main') {
+            $this->setConnection(config('database.default'));
+        }
+        
+        return parent::newQuery();
     }
 
     protected $fillable = [

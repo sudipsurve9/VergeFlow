@@ -20,17 +20,56 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        $stats = [
-            'total_orders' => Order::count(),
-            'total_products' => Product::count(),
-            'total_users' => User::where('role', 'user')->count(),
-            'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
-            'pending_orders' => Order::where('status', 'pending')->count(),
-            'low_stock_products' => Product::where('stock_quantity', '<', 10)->count(),
-        ];
+        // Debug database connection
+        $user = auth()->user();
+        $clientId = $user->client_id;
+        $defaultConnection = config('database.default');
+        
+        \Log::info('Dashboard Debug', [
+            'user_id' => $user->id,
+            'client_id' => $clientId,
+            'default_connection' => $defaultConnection,
+            'session_client_id' => session('current_client_id'),
+        ]);
+        
+        // Use client database directly - fallback to client if no client_id
+        if (!$clientId) {
+            \Log::warning('User has no client_id, defaulting to client connection');
+            $connection = 'client';
+        } else {
+            $connection = "client_{$clientId}";
+        }
+        
+        try {
+            $stats = [
+                'total_orders' => Order::on($connection)->count(),
+                'total_products' => Product::on($connection)->count(),
+                'total_users' => User::on($connection)->where('role', 'user')->count(),
+                'total_revenue' => Order::on($connection)->where('payment_status', 'paid')->sum('total_amount'),
+                'pending_orders' => Order::on($connection)->where('status', 'pending')->count(),
+                'low_stock_products' => Product::on($connection)->where('stock_quantity', '<', 10)->count(),
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Dashboard query error: ' . $e->getMessage());
+            // Fallback to empty stats
+            $stats = [
+                'total_orders' => 0,
+                'total_products' => 0,
+                'total_users' => 0,
+                'total_revenue' => 0,
+                'pending_orders' => 0,
+                'low_stock_products' => 0,
+            ];
+        }
 
-        $recent_orders = Order::with('user')->latest()->take(5)->get();
-        $top_products = Product::withCount('orderItems')->orderBy('order_items_count', 'desc')->take(5)->get();
+        try {
+            $recent_orders = Order::on($connection)->with('user')->latest()->take(5)->get();
+            $top_products = Product::on($connection)->withCount('orderItems')->orderBy('order_items_count', 'desc')->take(5)->get();
+        } catch (\Exception $e) {
+            \Log::error('Dashboard additional queries error: ' . $e->getMessage());
+            $recent_orders = collect();
+            $top_products = collect();
+        }
 
         return view('admin.dashboard', compact('stats', 'recent_orders', 'top_products'));
     }

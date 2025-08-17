@@ -70,7 +70,7 @@ class SimpleVault64Seeder extends Seeder
                 'is_featured' => 1,
                 'status' => 'active',
                 'is_active' => 1,
-                'image' => 'camaro-ss-1967.jpg',
+                'image' => 'hotwheels-1.jpg',
             ],
             [
                 'name' => '1969 Dodge Charger R/T',
@@ -84,7 +84,7 @@ class SimpleVault64Seeder extends Seeder
                 'is_featured' => 1,
                 'status' => 'active',
                 'is_active' => 1,
-                'image' => 'charger-rt-1969.jpg',
+                'image' => 'hotwheels-2.jpg',
             ],
             [
                 'name' => 'Lamborghini Aventador',
@@ -98,7 +98,7 @@ class SimpleVault64Seeder extends Seeder
                 'is_featured' => 1,
                 'status' => 'active',
                 'is_active' => 1,
-                'image' => 'lamborghini-aventador.jpg',
+                'image' => 'hotwheels-3.jpg',
             ],
             [
                 'name' => 'Ferrari 488 GTB',
@@ -140,7 +140,7 @@ class SimpleVault64Seeder extends Seeder
                 'is_featured' => 1,
                 'status' => 'active',
                 'is_active' => 1,
-                'image' => 'twin-mill-iii.jpg',
+                'image' => 'hotwheels-4.jpg',
             ],
         ];
 

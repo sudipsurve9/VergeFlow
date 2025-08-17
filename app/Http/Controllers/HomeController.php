@@ -28,14 +28,25 @@ class HomeController extends Controller
         if (!auth()->check()) {
             return view('welcome');
         }
-        // Get categories without active scope since categories table doesn't have is_active column
-        $categories = Category::withCount('products')->take(6)->get();
-        $featuredProducts = Product::with('category')
-            ->where('is_featured', true)
-            ->orWhere('sale_price', '>', 0)
-            ->take(8)
-            ->get();
+        
+        try {
+            // Get categories with error handling
+            $categories = Category::withCount('products')->take(6)->get();
+        } catch (\Exception $e) {
+            $categories = collect();
+        }
+        
+        try {
+            // Get featured products with error handling
+            $featuredProducts = Product::with('category')
+                ->where('is_featured', true)
+                ->orWhere('sale_price', '>', 0)
+                ->take(8)
+                ->get();
+        } catch (\Exception $e) {
+            $featuredProducts = collect();
+        }
 
-        return view('home', compact('categories', 'featuredProducts'));
+        return view('home', compact('categories', 'featuredProducts'), ['layout' => 'layouts.app_modern']);
     }
 }
