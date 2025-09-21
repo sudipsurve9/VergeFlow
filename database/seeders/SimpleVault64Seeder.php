@@ -190,19 +190,64 @@ class SimpleVault64Seeder extends Seeder
 
         // 4. Create demo customers
         $customers = [
-            ['name' => 'John Smith', 'email' => 'john@example.com', 'phone' => '+1-555-0101', 'address' => '123 Main St, New York, NY'],
-            ['name' => 'Sarah Johnson', 'email' => 'sarah@example.com', 'phone' => '+1-555-0102', 'address' => '456 Oak Ave, Los Angeles, CA'],
-            ['name' => 'Mike Wilson', 'email' => 'mike@example.com', 'phone' => '+1-555-0103', 'address' => '789 Pine Rd, Chicago, IL'],
+            [
+                'name' => 'John Smith', 
+                'email' => 'john@example.com', 
+                'phone' => '+1-555-0101', 
+                'address' => '123 Main St', 
+                'city' => 'New York', 
+                'state' => 'NY',
+                'postal_code' => '10001'
+            ],
+            [
+                'name' => 'Sarah Johnson', 
+                'email' => 'sarah@example.com', 
+                'phone' => '+1-555-0102', 
+                'address' => '456 Oak Ave', 
+                'city' => 'Los Angeles', 
+                'state' => 'CA',
+                'postal_code' => '90001'
+            ],
+            [
+                'name' => 'Mike Wilson', 
+                'email' => 'mike@example.com', 
+                'phone' => '+1-555-0103', 
+                'address' => '789 Pine Rd', 
+                'city' => 'Chicago', 
+                'state' => 'IL',
+                'postal_code' => '60601'
+            ],
         ];
 
-        foreach ($customers as $customer) {
-            $existing = DB::table('customers')->where('email', $customer['email'])->first();
-            if (!$existing) {
-                DB::table('customers')->insert(array_merge($customer, [
-                    'client_id' => 1,
+        foreach ($customers as $customerData) {
+            // First, check if user exists
+            $user = DB::table('users')->where('email', $customerData['email'])->first();
+            
+            if (!$user) {
+                // Create user first
+                $userId = DB::table('users')->insertGetId([
+                    'name' => $customerData['name'],
+                    'email' => $customerData['email'],
+                    'password' => Hash::make('password123'), // Default password
+                    'role' => 'customer',
+                    'email_verified_at' => now(),
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]));
+                ]);
+                
+                // Then create customer record
+                DB::table('customers')->insert([
+                    'user_id' => $userId,
+                    'phone' => $customerData['phone'],
+                    'address' => $customerData['address'],
+                    'city' => $customerData['city'],
+                    'state' => $customerData['state'],
+                    'postal_code' => $customerData['postal_code'],
+                    'country' => 'USA',
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
         }
 
