@@ -56,18 +56,22 @@ class DatabaseService
      */
     private function createDatabase(string $databaseName): void
     {
-        $connection = config('database.connections.mysql');
+        // Prefer MAIN_DB_* or CLIENT_DB_* credentials, fallback to mysql connection
+        $host = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', config('database.connections.mysql.host')));
+        $port = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', config('database.connections.mysql.port')));
+        $user = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', config('database.connections.mysql.username')));
+        $pass = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', config('database.connections.mysql.password')));
         
         try {
             // Use direct PDO connection for database creation
             $pdo = new \PDO(
-                "mysql:host={$connection['host']};port={$connection['port']}",
-                $connection['username'],
-                $connection['password']
+                "mysql:host={$host};port={$port}",
+                $user,
+                $pass
             );
             
             // Create database
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$databaseName}`");
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$databaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             Log::info("Database created successfully: {$databaseName}");
             
         } catch (\Exception $e) {
@@ -81,10 +85,15 @@ class DatabaseService
      */
     private function runMigrationsOnDatabase(string $databaseName): void
     {
-        $connection = config('database.connections.mysql');
+        // Build a base connection preferring MAIN_DB_* / CLIENT_DB_* envs
+        $base = config('database.connections.mysql');
+        $base['host'] = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', $base['host']));
+        $base['port'] = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', $base['port']));
+        $base['username'] = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', $base['username']));
+        $base['password'] = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', $base['password']));
         
         // Create temporary connection for the new database
-        $clientConnection = array_merge($connection, ['database' => $databaseName]);
+        $clientConnection = array_merge($base, ['database' => $databaseName]);
         
         DB::purge('client_temp');
         config(['database.connections.client_temp' => $clientConnection]);
@@ -101,7 +110,6 @@ class DatabaseService
         } catch (Exception $e) {
             Log::error("Failed to run migrations on database {$databaseName}: " . $e->getMessage());
             // Don't throw the exception, just log it
-            // This allows the database to be created even if migrations fail
         } finally {
             DB::purge('client_temp');
         }
@@ -130,9 +138,14 @@ class DatabaseService
      */
     public function createClientConnection(Client $client, string $connectionName): void
     {
-        $baseConnection = config('database.connections.mysql');
+        // Build a base connection preferring MAIN_DB_* / CLIENT_DB_* envs
+        $base = config('database.connections.mysql');
+        $base['host'] = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', $base['host']));
+        $base['port'] = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', $base['port']));
+        $base['username'] = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', $base['username']));
+        $base['password'] = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', $base['password']));
         
-        $clientConnection = array_merge($baseConnection, [
+        $clientConnection = array_merge($base, [
             'database' => $client->database_name
         ]);
         
