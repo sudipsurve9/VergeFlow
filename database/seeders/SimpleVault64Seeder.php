@@ -152,7 +152,17 @@ class SimpleVault64Seeder extends Seeder
         foreach ($products as $product) {
             $existing = DB::table('products')->where('sku', $product['sku'])->first();
             if (!$existing) {
+                // Generate slug from product name
+                $slug = \Illuminate\Support\Str::slug($product['name']);
+                
+                // Ensure slug is unique
+                $count = DB::table('products')->where('slug', 'LIKE', "{$slug}%")->count();
+                if ($count > 0) {
+                    $slug = "{$slug}-" . ($count + 1);
+                }
+                
                 DB::table('products')->insert(array_merge($product, [
+                    'slug' => $slug,
                     'client_id' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),
