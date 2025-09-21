@@ -14,17 +14,19 @@ class Product extends Model
     use HasFactory, MultiTenant;
     
     /**
-     * Override newQuery to ensure correct database connection
+     * Override newQuery to ensure correct database connection, but respect explicit connections (on()).
      */
     public function newQuery()
     {
-        // Force use of tenant connection if available
-        if (app()->bound('tenant.connection')) {
-            $this->setConnection(app('tenant.connection'));
-        } elseif (config('database.default') !== 'main') {
-            $this->setConnection(config('database.default'));
+        // If an explicit connection has already been set (e.g., via Model::on('client_1')) do NOT override it.
+        if (!$this->getConnectionName()) {
+            // Force use of tenant connection if available
+            if (app()->bound('tenant.connection')) {
+                $this->setConnection(app('tenant.connection'));
+            } elseif (config('database.default') !== 'main') {
+                $this->setConnection(config('database.default'));
+            }
         }
-        
         return parent::newQuery();
     }
 

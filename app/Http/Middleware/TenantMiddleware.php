@@ -44,6 +44,8 @@ class TenantMiddleware
         $clientId = $this->determineClientId($request);
         
         if ($clientId) {
+            // Persist client context for downstream usage (controllers, views)
+            session(['current_client_id' => $clientId]);
             $this->multiTenantService->switchToClientDatabase($clientId);
         } else {
             // Fallback to main database if client cannot be determined
@@ -103,6 +105,12 @@ class TenantMiddleware
         // Method 5: Check session for client context
         if (session('client_id')) {
             return session('client_id');
+        }
+
+        // Method 6: Check DEFAULT_CLIENT_ID from env (useful for localhost/dev)
+        $defaultId = env('DEFAULT_CLIENT_ID');
+        if (!empty($defaultId)) {
+            return (int) $defaultId;
         }
 
         // Default: Use first client for development (you might want to remove this in production)

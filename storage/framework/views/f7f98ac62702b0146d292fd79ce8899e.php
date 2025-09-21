@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('content'); ?>
 <div class="container-fluid py-5" style="background: var(--primary-bg); border-radius: 24px;" role="main" aria-label="Products listing main content">
     <!-- Page Header -->
@@ -149,7 +147,11 @@
                                 <?php endif; ?>
                             </div>
                             <div class="d-grid gap-2">
-                                <a href="<?php echo e(route('products.show', $product->slug)); ?>" class="btn btn-accent view-btn checkout-glow" aria-label="View details for <?php echo e($product->name); ?>">View Details</a>
+                                <?php if(!empty($product->slug)): ?>
+                                    <a href="<?php echo e(route('products.show', ['product' => $product->slug])); ?>" class="btn btn-accent view-btn checkout-glow" aria-label="View details for <?php echo e($product->name); ?>">View Details</a>
+                                <?php else: ?>
+                                    <button class="btn btn-accent view-btn checkout-glow" disabled title="Product link unavailable">View Details</button>
+                                <?php endif; ?>
                                 <button onclick="addToCart(<?php echo e($product->id); ?>)" class="btn btn-outline-accent add-btn icon-btn-glow" aria-label="Add <?php echo e($product->name); ?> to cart" title="Add this product to your cart">
                                     <i class="fa-solid fa-cart-plus me-2"></i>Add to Cart
                                 </button>

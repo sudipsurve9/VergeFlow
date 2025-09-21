@@ -9,7 +9,7 @@ use App\Models\Client;
 
 class MigrateClient extends Command
 {
-    protected $signature = 'tenants:migrate {clientId : The client ID to migrate} {--seed : Run seeders after migrate}';
+    protected $signature = 'tenants:migrate {clientId : The client ID to migrate} {--seed : Run seeders after migrate} {--path= : Run only the specified migration path}';
 
     protected $description = 'Run migrations (and optional seed) for a specific client database by client ID';
 
@@ -33,10 +33,15 @@ class MigrateClient extends Command
 
         // Run all migrations for this connection
         $this->info("Running migrations on connection: {$connectionName}");
-        Artisan::call('migrate', [
+        $args = [
             '--database' => $connectionName,
             '--force' => true,
-        ]);
+        ];
+        if ($path = $this->option('path')) {
+            $args['--path'] = $path;
+            $this->info("Using path: {$path}");
+        }
+        Artisan::call('migrate', $args);
         $this->output->write(Artisan::output());
 
         if ($this->option('seed')) {

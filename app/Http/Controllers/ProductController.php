@@ -13,9 +13,23 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $clientId = auth()->check() ? auth()->user()->client_id : 
-            (\App\Models\Client::where('name', 'Vault64')->value('id'));
-        $query = Product::with('category')->where('client_id', $clientId);
+        // Resolve client context (session from TenantMiddleware, then auth user, then DEFAULT_CLIENT_ID, then main's first client)
+        $clientId = session('current_client_id');
+        if (!$clientId && auth()->check()) {
+            $clientId = auth()->user()->client_id;
+        }
+        if (!$clientId && env('DEFAULT_CLIENT_ID')) {
+            $clientId = (int) env('DEFAULT_CLIENT_ID');
+        }
+        if (!$clientId) {
+            $clientId = \App\Models\Client::on('main')->orderBy('id')->value('id');
+        }
+
+        // Build query on tenant connection (set by middleware); filter by client_id if resolved
+        $query = Product::with('category');
+        if ($clientId) {
+            $query->where('client_id', $clientId);
+        }
         
         if ($request->category) {
             $query->where('category_id', $request->category);
@@ -49,7 +63,7 @@ class ProductController extends Controller
         }
         
         $products = $query->paginate(12);
-        $categories = Category::where('client_id', $clientId)->get();
+        $categories = $clientId ? Category::where('client_id', $clientId)->get() : Category::all();
         
         return view('products.index', compact('products', 'categories'));
     }

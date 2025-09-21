@@ -169,27 +169,29 @@ class Vault64HotWheelsSeeder extends Seeder
                 );
         }
 
-        // 5. Create a coupon in main DB (not client DB, unless you have coupon multi-db support)
-        Coupon::firstOrCreate([
-            'code' => 'HOTWHEELS10',
-        ], [
-            'name' => 'Hot Wheels 10% Off',
-            'description' => '10% off on all Hot Wheels products',
-            'type' => 'percentage',
-            'value' => 10,
-            'minimum_amount' => 0,
-            'maximum_discount' => null,
-            'usage_limit' => null,
-            'usage_limit_per_user' => 1,
-            'used_count' => 0,
-            'start_date' => now()->toDateString(),
-            'end_date' => now()->addDays(30)->toDateString(),
-            'is_active' => true,
-            'applicable_categories' => null,
-            'applicable_products' => null,
-            'excluded_products' => null,
-            'first_time_only' => false,
-            'status' => 'active',
-        ]);
+        // 5. Create a coupon in CLIENT DB (tenant-specific)
+        Coupon::on((new \App\Services\DatabaseService)->getClientConnection($client))
+            ->firstOrCreate([
+                'code' => 'HOTWHEELS10',
+                'client_id' => $client->id,
+            ], [
+                'name' => 'Hot Wheels 10% Off',
+                'description' => '10% off on all Hot Wheels products',
+                'type' => 'percentage',
+                'value' => 10,
+                'minimum_amount' => 0,
+                'maximum_discount' => null,
+                'usage_limit' => null,
+                'usage_limit_per_user' => 1,
+                'used_count' => 0,
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addDays(30)->toDateString(),
+                'is_active' => true,
+                'applicable_categories' => null,
+                'applicable_products' => null,
+                'excluded_products' => null,
+                'first_time_only' => false,
+                'status' => 'active',
+            ]);
     }
-} 
+}

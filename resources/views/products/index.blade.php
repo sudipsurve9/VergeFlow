@@ -145,7 +145,11 @@
                                 @endif
                             </div>
                             <div class="d-grid gap-2">
-                                <a href="{{ route('products.show', $product->slug) }}" class="btn btn-accent view-btn checkout-glow" aria-label="View details for {{ $product->name }}">View Details</a>
+                                @if(!empty($product->slug))
+                                    <a href="{{ route('products.show', ['product' => $product->slug]) }}" class="btn btn-accent view-btn checkout-glow" aria-label="View details for {{ $product->name }}">View Details</a>
+                                @else
+                                    <button class="btn btn-accent view-btn checkout-glow" disabled title="Product link unavailable">View Details</button>
+                                @endif
                                 <button onclick="addToCart({{ $product->id }})" class="btn btn-outline-accent add-btn icon-btn-glow" aria-label="Add {{ $product->name }} to cart" title="Add this product to your cart">
                                     <i class="fa-solid fa-cart-plus me-2"></i>Add to Cart
                                 </button>
