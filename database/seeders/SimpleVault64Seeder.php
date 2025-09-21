@@ -229,7 +229,7 @@ class SimpleVault64Seeder extends Seeder
                     'name' => $customerData['name'],
                     'email' => $customerData['email'],
                     'password' => Hash::make('password123'), // Default password
-                    'role' => 'customer',
+                    'role' => 'user', // Must be either 'user' or 'admin' based on the users table enum
                     'email_verified_at' => now(),
                     'created_at' => now(),
                     'updated_at' => now(),
