@@ -964,8 +964,8 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <span><i class="fa-solid fa-phone me-2"></i>+1 (555) 123-4567</span>
-                        <span class="ms-3"><i class="fa-solid fa-envelope me-2"></i>info@valult64.com</span>
+                        <a href="tel:{{ $telHref }}"><i class="fa-solid fa-phone me-2"></i>{{ $contactPhone }}</a>
+                        <a class="ms-3" href="mailto:{{ $contactEmail }}"><i class="fa-solid fa-envelope me-2"></i>{{ $contactEmail }}</a>
                     </div>
                     <div class="col-md-6 text-end">
                         <a href="#"><i class="fa-brands fa-facebook-f"></i></a>

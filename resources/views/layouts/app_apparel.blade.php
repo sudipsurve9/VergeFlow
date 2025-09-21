@@ -249,8 +249,8 @@
     <div class="top-header">
         <div class="container">
             <div class="contact-info">
-                <a href="tel:+1234567890"><i class="fas fa-phone"></i> +1 (234) 567-890</a>
-                <a href="mailto:info@vault64.com"><i class="fas fa-envelope"></i> info@vault64.com</a>
+                <a href="tel:{{ $telHref }}"><i class="fas fa-phone"></i> {{ $contactPhone }}</a>
+                <a href="mailto:{{ $contactEmail }}"><i class="fas fa-envelope"></i> {{ $contactEmail }}</a>
             </div>
             <div class="social-links">
                 <a href="#"><i class="fab fa-facebook"></i></a>
