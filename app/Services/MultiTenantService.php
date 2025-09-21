@@ -48,14 +48,16 @@ class MultiTenantService
         
         $connectionName = "client_{$clientId}";
         
+        // Prefer MAIN_DB_* credentials for tenant databases (most robust in production),
+        // fallback to CLIENT_DB_* if provided, else to generic DB_* as last resort.
         Config::set("database.connections.{$connectionName}", [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
+            'host' => env('CLIENT_DB_HOST', env('MAIN_DB_HOST', env('DB_HOST', '127.0.0.1'))),
+            'port' => env('CLIENT_DB_PORT', env('MAIN_DB_PORT', env('DB_PORT', '3306'))),
             'database' => $databaseName,
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
+            'username' => env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', env('DB_USERNAME', 'root'))),
+            'password' => env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', env('DB_PASSWORD', ''))),
+            'unix_socket' => env('CLIENT_DB_SOCKET', env('MAIN_DB_SOCKET', env('DB_SOCKET', ''))),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',

@@ -19,13 +19,19 @@ class User extends Authenticatable
      */
     public function newQuery()
     {
-        // Force use of tenant connection if available
+        // If an explicit connection has already been set (e.g., via User::on('main'))
+        // then respect it and do NOT override with tenant/default connection.
+        if ($this->getConnectionName()) {
+            return parent::newQuery();
+        }
+
+        // Otherwise, force use of tenant connection if available, else use current default
         if (app()->bound('tenant.connection')) {
             $this->setConnection(app('tenant.connection'));
         } elseif (config('database.default') !== 'main') {
             $this->setConnection(config('database.default'));
         }
-        
+
         return parent::newQuery();
     }
 
