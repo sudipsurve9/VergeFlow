@@ -87,7 +87,7 @@ return [
             'url' => env('CLIENT_DATABASE_URL'),
             'host' => env('CLIENT_DB_HOST', '127.0.0.1'),
             'port' => env('CLIENT_DB_PORT', '3306'),
-            'database' => env('CLIENT_DB_DATABASE', 'vergeflow_vault64_1'),
+            'database' => env('CLIENT_DB_DATABASE', 'vergeflow_client_1'),
             'username' => env('CLIENT_DB_USERNAME', 'root'),
             'password' => env('CLIENT_DB_PASSWORD', ''),
             'unix_socket' => env('CLIENT_DB_SOCKET', ''),

@@ -32,25 +32,60 @@ class AdminController extends Controller
             'session_client_id' => session('current_client_id'),
         ]);
         
-        // Use client database directly - fallback to client if no client_id
-        if (!$clientId) {
-            \Log::warning('User has no client_id, defaulting to client connection');
-            $connection = 'client';
-        } else {
-            $connection = "client_{$clientId}";
+        // Use client database directly
+        $connection = 'client';
+        
+        // Test database connection first
+        try {
+            $testConnection = \DB::connection($connection)->getPdo();
+            \Log::info('Database connection successful', ['connection' => $connection]);
+        } catch (\Exception $e) {
+            \Log::error('Database connection failed: ' . $e->getMessage());
         }
         
         try {
+            // Get raw counts with detailed logging
+            $totalOrders = \DB::connection($connection)->table('orders')->count();
+            $totalProducts = \DB::connection($connection)->table('products')->count();
+            $totalUsers = \DB::connection($connection)->table('users')->where('role', 'user')->count();
+            $totalRevenue = \DB::connection($connection)->table('orders')->where('payment_status', 'paid')->sum('total_amount') ?? 0;
+            $pendingOrders = \DB::connection($connection)->table('orders')->where('status', 'pending')->count();
+            $lowStockProducts = \DB::connection($connection)->table('products')->where('stock_quantity', '<', 10)->count();
+            
+            \Log::info('Dashboard raw queries', [
+                'total_orders' => $totalOrders,
+                'total_products' => $totalProducts,
+                'total_users' => $totalUsers,
+                'total_revenue' => $totalRevenue,
+                'pending_orders' => $pendingOrders,
+                'low_stock_products' => $lowStockProducts,
+            ]);
+            
+            // Get additional counts for Module Overview
+            $totalCategories = \DB::connection($connection)->table('categories')->count();
+            $totalReviews = 0; // No reviews table yet
+            $totalCoupons = 0; // No coupons table yet
+            
+            // System status - check API integrations (Stripe, Shiprocket, etc.)
+            $activeApiIntegrations = 0;
+            if (config('services.stripe.key')) $activeApiIntegrations++;
+            if (config('shiprocket.api_key')) $activeApiIntegrations++;
+            
             $stats = [
-                'total_orders' => Order::on($connection)->count(),
-                'total_products' => Product::on($connection)->count(),
-                'total_users' => User::on($connection)->where('role', 'user')->count(),
-                'total_revenue' => Order::on($connection)->where('payment_status', 'paid')->sum('total_amount'),
-                'pending_orders' => Order::on($connection)->where('status', 'pending')->count(),
-                'low_stock_products' => Product::on($connection)->where('stock_quantity', '<', 10)->count(),
+                'total_orders' => $totalOrders,
+                'total_products' => $totalProducts,
+                'total_users' => $totalUsers,
+                'total_revenue' => $totalRevenue,
+                'pending_orders' => $pendingOrders,
+                'low_stock_products' => $lowStockProducts,
+                'total_categories' => $totalCategories,
+                'total_reviews' => $totalReviews,
+                'total_coupons' => $totalCoupons,
+                'active_api_integrations' => $activeApiIntegrations,
             ];
         } catch (\Exception $e) {
             \Log::error('Dashboard query error: ' . $e->getMessage());
+            \Log::error('Dashboard query stack trace: ' . $e->getTraceAsString());
             // Fallback to empty stats
             $stats = [
                 'total_orders' => 0,
@@ -59,18 +94,28 @@ class AdminController extends Controller
                 'total_revenue' => 0,
                 'pending_orders' => 0,
                 'low_stock_products' => 0,
+                'total_categories' => 0,
+                'total_reviews' => 0,
+                'total_coupons' => 0,
+                'active_api_integrations' => 0,
             ];
         }
 
         try {
-            $recent_orders = Order::on($connection)->with('user')->latest()->take(5)->get();
-            $top_products = Product::on($connection)->withCount('orderItems')->orderBy('order_items_count', 'desc')->take(5)->get();
+            $recent_orders = \DB::connection($connection)->table('orders')
+                ->join('users', 'orders.user_id', '=', 'users.id')
+                ->select('orders.*', 'users.name as user_name')
+                ->orderBy('orders.created_at', 'desc')
+                ->limit(5)
+                ->get();
+            $top_products = \DB::connection($connection)->table('products')->limit(5)->get();
         } catch (\Exception $e) {
             \Log::error('Dashboard additional queries error: ' . $e->getMessage());
             $recent_orders = collect();
             $top_products = collect();
         }
 
+        \Log::info('Final dashboard stats', $stats);
         return view('admin.dashboard', compact('stats', 'recent_orders', 'top_products'));
     }
 

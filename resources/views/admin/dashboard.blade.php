@@ -23,7 +23,7 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Total Orders</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalOrders ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_orders'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
@@ -40,7 +40,7 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Total Revenue</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">₹{{ number_format($totalRevenue ?? 0, 2) }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₹{{ number_format($stats['total_revenue'] ?? 0, 2) }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
@@ -57,7 +57,7 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Total Products</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalProducts ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_products'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-box fa-2x text-gray-300"></i>
@@ -74,7 +74,7 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Total Customers</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalCustomers ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_users'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-users fa-2x text-gray-300"></i>
@@ -129,7 +129,7 @@
                     <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-primary" aria-label="View all orders">View All</a>
                 </div>
                 <div class="card-body">
-                    @if(isset($recentOrders) && $recentOrders->count() > 0)
+                    @if(isset($recent_orders) && $recent_orders->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-bordered" role="table" aria-label="Recent orders table">
                                 <thead>
@@ -142,17 +142,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($recentOrders as $order)
+                                    @foreach($recent_orders as $order)
                                         <tr>
                                             <td>#{{ $order->id }}</td>
-                                            <td>{{ $order->user->name ?? 'Guest' }}</td>
+                                            <td>{{ $order->user_name ?? 'Guest' }}</td>
                                             <td>₹{{ number_format($order->total_amount, 2) }}</td>
                                             <td>
                                                 <span class="badge badge-{{ $order->status == 'pending' ? 'warning' : ($order->status == 'processing' ? 'info' : ($order->status == 'delivered' ? 'success' : 'danger')) }}">
                                                     {{ ucfirst($order->status) }}
                                                 </span>
                                             </td>
-                                            <td>{{ $order->created_at->format('M d, Y') }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -173,22 +173,22 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <span>Database</span>
-                            <span class="badge badge-success">Online</span>
+                            <span class="badge bg-success text-white px-2 py-1">Online</span>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <span>Storage</span>
-                            <span class="badge badge-success">Available</span>
+                            <span class="badge bg-success text-white px-2 py-1">Available</span>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <span>API Integrations</span>
-                            <span class="badge badge-{{ isset($activeApiIntegrations) && $activeApiIntegrations > 0 ? 'success' : 'warning' }}">
-                                {{ $activeApiIntegrations ?? 0 }} Active
+                            <span class="badge {{ isset($stats['active_api_integrations']) && $stats['active_api_integrations'] > 0 ? 'bg-success' : 'bg-warning' }} text-white px-2 py-1">
+                                {{ $stats['active_api_integrations'] ?? 0 }} Active
                             </span>
                         </div>
                     </div>
@@ -215,42 +215,42 @@
                         <div class="col-md-2 mb-3">
                             <div class="text-center">
                                 <i class="fas fa-box fa-3x text-primary mb-2"></i>
-                                <h5>{{ $totalProducts ?? 0 }}</h5>
+                                <h5>{{ $stats['total_products'] ?? 0 }}</h5>
                                 <small class="text-muted">Products</small>
                             </div>
                         </div>
                         <div class="col-md-2 mb-3">
                             <div class="text-center">
                                 <i class="fas fa-tags fa-3x text-success mb-2"></i>
-                                <h5>{{ $totalCategories ?? 0 }}</h5>
+                                <h5>{{ $stats['total_categories'] ?? 0 }}</h5>
                                 <small class="text-muted">Categories</small>
                             </div>
                         </div>
                         <div class="col-md-2 mb-3">
                             <div class="text-center">
                                 <i class="fas fa-users fa-3x text-info mb-2"></i>
-                                <h5>{{ $totalCustomers ?? 0 }}</h5>
+                                <h5>{{ $stats['total_users'] ?? 0 }}</h5>
                                 <small class="text-muted">Customers</small>
                             </div>
                         </div>
                         <div class="col-md-2 mb-3">
                             <div class="text-center">
                                 <i class="fas fa-shopping-cart fa-3x text-warning mb-2"></i>
-                                <h5>{{ $totalOrders ?? 0 }}</h5>
+                                <h5>{{ $stats['total_orders'] ?? 0 }}</h5>
                                 <small class="text-muted">Orders</small>
                             </div>
                         </div>
                         <div class="col-md-2 mb-3">
                             <div class="text-center">
                                 <i class="fas fa-star fa-3x text-warning mb-2"></i>
-                                <h5>{{ $totalReviews ?? 0 }}</h5>
+                                <h5>{{ $stats['total_reviews'] ?? 0 }}</h5>
                                 <small class="text-muted">Reviews</small>
                             </div>
                         </div>
                         <div class="col-md-2 mb-3">
                             <div class="text-center">
                                 <i class="fas fa-ticket-alt fa-3x text-danger mb-2"></i>
-                                <h5>{{ $totalCoupons ?? 0 }}</h5>
+                                <h5>{{ $stats['total_coupons'] ?? 0 }}</h5>
                                 <small class="text-muted">Coupons</small>
                             </div>
                         </div>

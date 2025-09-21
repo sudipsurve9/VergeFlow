@@ -86,39 +86,63 @@
                                         <td>{{ $category->created_at->format('M d, Y') }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ route('admin.categories.show', $category) }}" 
-                                                   class="btn btn-sm btn-info" 
-                                                   title="View" aria-label="View {{ $category->name }} details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.categories.edit', $category) }}" 
-                                                   class="btn btn-sm btn-warning" 
-                                                   title="Edit" aria-label="Edit {{ $category->name }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('admin.categories.toggle-status', $category) }}" 
-                                                      method="POST" 
-                                                      style="display: inline;" aria-label="Toggle status for {{ $category->name }}">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <button type="submit" 
-                                                            class="btn btn-sm {{ $category->is_active ? 'btn-secondary' : 'btn-success' }}" 
-                                                            title="{{ $category->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $category->is_active ? 'Deactivate' : 'Activate' }} {{ $category->name }}">
-                                                        <i class="fas {{ $category->is_active ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                                @if($category->id)
+                                                    <a href="{{ route('admin.categories.show', $category->id) }}" 
+                                                       class="btn btn-sm btn-info" 
+                                                       title="View" aria-label="View {{ $category->name }} details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                @else
+                                                    <button class="btn btn-sm btn-info" disabled title="Category ID missing">
+                                                        <i class="fas fa-eye"></i>
                                                     </button>
-                                                </form>
-                                                <form action="{{ route('admin.categories.destroy', $category) }}" 
-                                                      method="POST" 
-                                                      style="display: inline;"
-                                                      onsubmit="return confirm('Are you sure you want to delete this category?')" aria-label="Delete {{ $category->name }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="btn btn-sm btn-danger" 
-                                                            title="Delete" aria-label="Delete {{ $category->name }}">
+                                                @endif
+                                                @if($category->id)
+                                                    <a href="{{ route('admin.categories.edit', $category->id) }}" 
+                                                       class="btn btn-sm btn-warning" 
+                                                       title="Edit" aria-label="Edit {{ $category->name }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                @else
+                                                    <button class="btn btn-sm btn-warning" disabled title="Category ID missing">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                @endif
+                                                @if($category->id)
+                                                    <form action="{{ route('admin.categories.toggle-status', $category->id) }}" 
+                                                          method="POST" 
+                                                          style="display: inline;" aria-label="Toggle status for {{ $category->name }}">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <button type="submit" 
+                                                                class="btn btn-sm {{ $category->is_active ? 'btn-secondary' : 'btn-success' }}" 
+                                                                title="{{ $category->is_active ? 'Deactivate' : 'Activate' }}" aria-label="{{ $category->is_active ? 'Deactivate' : 'Activate' }} {{ $category->name }}">
+                                                            <i class="fas {{ $category->is_active ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button class="btn btn-sm btn-secondary" disabled title="Category ID missing">
+                                                        <i class="fas fa-toggle-off"></i>
+                                                    </button>
+                                                @endif
+                                                @if($category->id)
+                                                    <form action="{{ route('admin.categories.destroy', $category->id) }}" 
+                                                          method="POST" 
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Are you sure you want to delete this category?')" aria-label="Delete {{ $category->name }}">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                class="btn btn-sm btn-danger" 
+                                                                title="Delete" aria-label="Delete {{ $category->name }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button class="btn btn-sm btn-danger" disabled title="Category ID missing">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
-                                                </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>

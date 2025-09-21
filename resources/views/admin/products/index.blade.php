@@ -185,50 +185,80 @@
                                         <td>{{ $product->created_at->format('M d, Y') }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ route('admin.products.show', $product) }}" 
-                                                   class="btn btn-sm btn-info" 
-                                                   title="View" aria-label="View {{ $product->name }} details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="{{ route('admin.products.edit', $product) }}" 
-                                                   class="btn btn-sm btn-warning" 
-                                                   title="Edit" aria-label="Edit {{ $product->name }}">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('admin.products.toggle-status', $product) }}" 
-                                                      method="POST" 
-                                                      style="display: inline;" aria-label="Toggle status for {{ $product->name }}">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <button type="submit" 
-                                                            class="btn btn-sm {{ $product->is_active ? 'btn-secondary' : 'btn-success' }}" 
-                                                            title="{{ $product->is_active ? 'Deactivate' : 'Activate' }}">
-                                                        <i class="fas {{ $product->is_active ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                                @if($product->id)
+                                                    <a href="{{ route('admin.products.show', $product->id) }}" 
+                                                       class="btn btn-sm btn-info" 
+                                                       title="View" aria-label="View {{ $product->name }} details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                @else
+                                                    <button class="btn btn-sm btn-info" disabled title="Product ID missing">
+                                                        <i class="fas fa-eye"></i>
                                                     </button>
-                                                </form>
-                                                <form action="{{ route('admin.products.toggle-featured', $product) }}" 
-                                                      method="POST" 
-                                                      style="display: inline;">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <button type="submit" 
-                                                            class="btn btn-sm {{ $product->is_featured ? 'btn-secondary' : 'btn-warning' }}" 
-                                                            title="{{ $product->is_featured ? 'Remove Featured' : 'Mark as Featured' }}">
-                                                        <i class="fas {{ $product->is_featured ? 'fa-star' : 'fa-star-o' }}"></i>
+                                                @endif
+                                                @if($product->id)
+                                                    <a href="{{ route('admin.products.edit', $product->id) }}" 
+                                                       class="btn btn-sm btn-warning" 
+                                                       title="Edit" aria-label="Edit {{ $product->name }}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                @else
+                                                    <button class="btn btn-sm btn-warning" disabled title="Product ID missing">
+                                                        <i class="fas fa-edit"></i>
                                                     </button>
-                                                </form>
-                                                <form action="{{ route('admin.products.destroy', $product) }}" 
-                                                      method="POST" 
-                                                      style="display: inline;"
-                                                      onsubmit="return confirm('Are you sure you want to delete this product?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="btn btn-sm btn-danger" 
-                                                            title="Delete">
+                                                @endif
+                                                @if($product->id)
+                                                    <form action="{{ route('admin.products.toggle-status', $product->id) }}" 
+                                                          method="POST" 
+                                                          style="display: inline;" aria-label="Toggle status for {{ $product->name }}">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <button type="submit" 
+                                                                class="btn btn-sm {{ $product->is_active ? 'btn-secondary' : 'btn-success' }}" 
+                                                                title="{{ $product->is_active ? 'Deactivate' : 'Activate' }}">
+                                                            <i class="fas {{ $product->is_active ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button class="btn btn-sm btn-secondary" disabled title="Product ID missing">
+                                                        <i class="fas fa-toggle-off"></i>
+                                                    </button>
+                                                @endif
+                                                @if($product->id)
+                                                    <form action="{{ route('admin.products.toggle-featured', $product->id) }}" 
+                                                          method="POST" 
+                                                          style="display: inline;">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <button type="submit" 
+                                                                class="btn btn-sm {{ $product->is_featured ? 'btn-secondary' : 'btn-warning' }}" 
+                                                                title="{{ $product->is_featured ? 'Remove Featured' : 'Mark as Featured' }}">
+                                                            <i class="fas {{ $product->is_featured ? 'fa-star' : 'fa-star-o' }}"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button class="btn btn-sm btn-secondary" disabled title="Product ID missing">
+                                                        <i class="fas fa-star"></i>
+                                                    </button>
+                                                @endif
+                                                @if($product->id)
+                                                    <form action="{{ route('admin.products.destroy', $product->id) }}" 
+                                                          method="POST" 
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                class="btn btn-sm btn-danger" 
+                                                                title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button class="btn btn-sm btn-danger" disabled title="Product ID missing">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
-                                                </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
