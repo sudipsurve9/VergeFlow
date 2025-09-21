@@ -7,6 +7,7 @@ use App\Services\MultiTenantService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 class SimpleVault64Seeder extends Seeder
 {
@@ -21,10 +22,23 @@ class SimpleVault64Seeder extends Seeder
     {
         echo "🌱 Seeding simple demo data for Vault64 client...\n";
 
+        // Get the Vault64 client
+        $client = \App\Models\Client::find(1);
+        
+        if (!$client) {
+            throw new \Exception("Vault64 client not found. Please run Vault64ClientSeeder first.");
+        }
+        
+        // Ensure client database exists and is migrated
+        $this->multiTenantService->createClientDatabase($client);
+        
         // Switch to client database (client ID 1 = Vault64)
         $this->multiTenantService->switchToClientDatabase(1);
         
         echo "✅ Connected to client database: " . DB::getDatabaseName() . "\n";
+        
+        // Run migrations for the client database
+        $this->runMigrations();
 
         // 1. Create categories
         $categoryIds = [];
@@ -260,5 +274,22 @@ class SimpleVault64Seeder extends Seeder
         echo "📊 Summary: 6 categories, 6 products, 1 admin user, 3 customers\n";
         echo "🔐 Admin Login: admin@vault64.com / password123\n";
         echo "🌐 Visit: http://127.0.0.1:8000\n";
+        }
+    
+    /**
+     * Run migrations for the client database
+     */
+    protected function runMigrations(): void
+    {
+        echo "🔄 Running migrations for client database...\n";
+        
+        // Run migrations for the client database
+        Artisan::call('migrate', [
+            '--database' => 'client',
+            '--path' => 'database/migrations/client',
+            '--force' => true,
+        ]);
+        
+        echo "✅ Migrations completed\n";
     }
 }
