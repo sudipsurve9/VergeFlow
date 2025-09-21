@@ -16,13 +16,22 @@ class MultiTenantService
     public function createClientDatabase(Client $client): bool
     {
         try {
-            $databaseName = "vergeflow_client_{$client->id}";
+            // Prefer existing database_name on client; otherwise generate with optional prefix
+            if (!empty($client->database_name)) {
+                $databaseName = $client->database_name;
+            } else {
+                $prefix = env('DB_NAME_PREFIX', '');
+                $prefix = $prefix ? rtrim($prefix, '_') . '_' : '';
+                $databaseName = $prefix . "vergeflow_client_{$client->id}";
+            }
             
             // Create the database
             DB::connection('main')->statement("CREATE DATABASE IF NOT EXISTS `{$databaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             
-            // Update client record with database name
-            $client->update(['database_name' => $databaseName]);
+            // Update client record with database name (store what we actually created/used)
+            if ($client->database_name !== $databaseName) {
+                $client->update(['database_name' => $databaseName]);
+            }
             
             // Set up dynamic connection for this client
             $this->setClientDatabaseConnection($client->id, $databaseName);
@@ -42,8 +51,15 @@ class MultiTenantService
      */
     public function setClientDatabaseConnection(int $clientId, string $databaseName = null): void
     {
+        // Prefer the stored database_name from main DB if available
         if (!$databaseName) {
-            $databaseName = "vergeflow_client_{$clientId}";
+            $client = Client::on('main')->find($clientId);
+            if ($client && !empty($client->database_name)) {
+                $databaseName = $client->database_name;
+            } else {
+                // Fallback to legacy naming if not set (backward compatibility)
+                $databaseName = "vergeflow_client_{$clientId}";
+            }
         }
         
         $connectionName = "client_{$clientId}";
@@ -83,8 +99,11 @@ class MultiTenantService
      */
     public function switchToClientDatabase(int $clientId): void
     {
+        // Ensure connection uses the stored database_name if present
+        $client = Client::on('main')->find($clientId);
+        $dbName = $client && $client->database_name ? $client->database_name : null;
         $connectionName = $this->getClientConnection($clientId);
-        $this->setClientDatabaseConnection($clientId);
+        $this->setClientDatabaseConnection($clientId, $dbName);
         Config::set('database.default', $connectionName);
     }
     
