@@ -310,7 +310,7 @@
                     </div>
 
                     <!-- Enhanced Action Buttons -->
-                    @if($order->status === 'pending' || $order->status === 'processing')
+                    @if($order->status === 'pending')
                         <div class="action-buttons mt-4">
                             <a href="{{ route('user.orders.invoice.tcpdf', $order->id) }}" class="btn-invoice-modern mb-3" target="_blank">
                                 <i class="fas fa-file-pdf me-2"></i>

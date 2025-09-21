@@ -326,10 +326,13 @@
                                 <i class="fas fa-file-pdf me-2"></i>
                                 Download Invoice
                             </a>
-                            <button type="button" class="btn-cancel-modern" onclick="if(confirm('Are you sure you want to cancel this order?')) { alert('Order cancellation functionality will be implemented.'); }">
-                                <i class="fas fa-times-circle me-2"></i>
-                                Cancel Order
-                            </button>
+                            <form method="POST" action="<?php echo e(route('orders.cancel', $order->id)); ?>" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                <?php echo csrf_field(); ?>
+                                <button type="submit" class="btn-cancel-modern">
+                                    <i class="fas fa-times-circle me-2"></i>
+                                    Cancel Order
+                                </button>
+                            </form>
                         </div>
                     <?php endif; ?>
                     
