@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Services\MultiTenantService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class SimpleVault64Seeder extends Seeder
 {
@@ -40,17 +41,27 @@ class SimpleVault64Seeder extends Seeder
         foreach ($categories as $name => $description) {
             $existing = DB::table('categories')->where('name', $name)->first();
             if (!$existing) {
-                $id = DB::table('categories')->insertGetId([
+                $categoryData = [
                     'name' => $name,
+                    'slug' => \Illuminate\Support\Str::slug($name),
                     'description' => $description,
-                    'image' => strtolower(str_replace([' ', '&'], ['-', ''], $name)) . '.jpg',
                     'client_id' => 1,
+                    'is_active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ];
+                
+                // Check if image column exists before adding it
+                if (Schema::hasColumn('categories', 'image')) {
+                    $categoryData['image'] = strtolower(str_replace([' ', '&'], ['-', ''], $name)) . '.jpg';
+                }
+                
+                $id = DB::table('categories')->insertGetId($categoryData);
                 $categoryIds[$name] = $id;
+                echo "✅ Created category: {$name}\n";
             } else {
                 $categoryIds[$name] = $existing->id;
+                echo "ℹ️  Category already exists: {$name}\n";
             }
         }
 
