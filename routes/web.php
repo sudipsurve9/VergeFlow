@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Auth;
 |
 */
 
+// Health check routes (no middleware for load balancer checks)
+Route::get('/health', [App\Http\Controllers\HealthController::class, 'check'])->name('health.check');
+Route::get('/health/detailed', [App\Http\Controllers\HealthController::class, 'detailed'])->name('health.detailed');
+
 Route::get('/', function () {
     // Check if user is logged in
     if (Auth::check()) {
