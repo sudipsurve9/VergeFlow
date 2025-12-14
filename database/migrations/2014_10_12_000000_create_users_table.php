@@ -13,6 +13,11 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
+        // Skip if table already exists (handles cases where table was created manually)
+        if (Schema::hasTable('users')) {
+            return;
+        }
+        
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
