@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Only run if table exists
+        if (!Schema::hasTable('product_reviews')) {
+            return;
+        }
+        
         Schema::table('product_reviews', function (Blueprint $table) {
             // Add columns if they don't exist
             if (!Schema::hasColumn('product_reviews', 'title')) {

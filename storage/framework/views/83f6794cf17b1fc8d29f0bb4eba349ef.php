@@ -1,19 +1,19 @@
 <!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="dark">
+<html lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
-    <title>{{ config('app.name', 'VergeFlow') }} - @yield('title', 'Home')</title>
+    <title><?php echo e(config('app.name', 'VergeFlow')); ?> - <?php echo $__env->yieldContent('title', 'Home'); ?></title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}" defer></script>
+    <script src="<?php echo e(asset('js/app.js')); ?>" defer></script>
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="<?php echo e(asset('css/app.css')); ?>" rel="stylesheet">
     <style>
         :root {
             --primary-bg: #181818;
@@ -991,8 +991,8 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <a href="tel:{{ $telHref }}"><i class="fa-solid fa-phone me-2"></i>{{ $contactPhone }}</a>
-                        <a class="ms-3" href="mailto:{{ $contactEmail }}"><i class="fa-solid fa-envelope me-2"></i>{{ $contactEmail }}</a>
+                        <a href="tel:<?php echo e($telHref); ?>"><i class="fa-solid fa-phone me-2"></i><?php echo e($contactPhone); ?></a>
+                        <a class="ms-3" href="mailto:<?php echo e($contactEmail); ?>"><i class="fa-solid fa-envelope me-2"></i><?php echo e($contactEmail); ?></a>
                     </div>
                     <div class="col-md-6 text-end">
                         <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
@@ -1009,7 +1009,7 @@
                 <div class="row align-items-center py-3">
                     <div class="col-md-3">
                         <a class="navbar-brand d-flex align-items-center" href="/">
-                            <img src="{{ asset('logo.png') }}" alt="Vault64 Logo" style="width:200px;height:auto;max-width:100%;object-fit:contain;margin-right:10px;">
+                            <img src="<?php echo e(asset('logo.png')); ?>" alt="Vault64 Logo" style="width:200px;height:auto;max-width:100%;object-fit:contain;margin-right:10px;">
                         </a>
                     </div>
                     <div class="col-md-6">
@@ -1024,34 +1024,35 @@
                                 <i class="fa-solid fa-moon" id="theme-icon"></i>
                                 <span id="theme-text">Dark</span>
                             </button>
-                            @auth
+                            <?php if(auth()->guard()->check()): ?>
                                 <div class="dropdown me-3">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="User menu for {{ Auth::user()->name }}">
-                                        <i class="fa-solid fa-user-circle me-1"></i>{{ Auth::user()->name }}
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="User menu for <?php echo e(Auth::user()->name); ?>">
+                                        <i class="fa-solid fa-user-circle me-1"></i><?php echo e(Auth::user()->name); ?>
+
                                     </a>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="{{ route('profile') }}">
+                                        <li><a class="dropdown-item" href="<?php echo e(route('profile')); ?>">
                                             <i class="fa-solid fa-user"></i> Profile
                                         </a></li>
-                                        <li><a class="dropdown-item" href="{{ route('orders.index') }}">My Orders</a></li>
-                                        @if(auth()->user()->role === 'admin')
-                                            <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">Admin Panel</a></li>
-                                        @endif
+                                        <li><a class="dropdown-item" href="<?php echo e(route('orders.index')); ?>">My Orders</a></li>
+                                        <?php if(auth()->user()->role === 'admin'): ?>
+                                            <li><a class="dropdown-item" href="<?php echo e(route('admin.dashboard')); ?>">Admin Panel</a></li>
+                                        <?php endif; ?>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <a class="dropdown-item" href="{{ route('logout') }}"
+                                            <a class="dropdown-item" href="<?php echo e(route('logout')); ?>"
                                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                                 Logout
                                             </a>
                                         </li>
                                     </ul>
                                 </div>
-                            @else
-                                <a href="{{ route('login') }}" class="btn btn-outline-primary me-2">Login</a>
-                                <a href="{{ route('register') }}" class="btn btn-primary">Register</a>
-                            @endauth
+                            <?php else: ?>
+                                <a href="<?php echo e(route('login')); ?>" class="btn btn-outline-primary me-2">Login</a>
+                                <a href="<?php echo e(route('register')); ?>" class="btn btn-primary">Register</a>
+                            <?php endif; ?>
                             
-                            <a href="{{ route('cart.index') }}" class="cart-icon ms-3" aria-label="View cart">
+                            <a href="<?php echo e(route('cart.index')); ?>" class="cart-icon ms-3" aria-label="View cart">
                                 <i class="fa-solid fa-shopping-cart"></i>
                                 <span class="cart-badge" id="cart-count">0</span>
                             </a>
@@ -1070,58 +1071,59 @@
                 <nav class="mobile-nav-menu" role="navigation" aria-label="Mobile navigation menu">
                     <div class="container-fluid">
                         <div class="mobile-nav-content">
-                            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
+                            <a href="<?php echo e(route('home')); ?>" class="nav-link <?php echo e(request()->routeIs('home') ? 'active' : ''); ?>">
                                 <i class="fa-solid fa-home me-2"></i>Home
                             </a>
-                            <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
+                            <a href="<?php echo e(route('products.index')); ?>" class="nav-link <?php echo e(request()->routeIs('products.*') ? 'active' : ''); ?>">
                                 <i class="fa-solid fa-box me-2"></i>All Products
                             </a>
-                            @foreach($categories ?? [] as $category)
-                                <a href="{{ route('products.index', ['category' => $category->slug]) }}" 
-                                   class="nav-link {{ request('category') == $category->slug ? 'active' : '' }}">
-                                    <i class="fa-solid fa-tag me-2"></i>{{ $category->name }}
+                            <?php $__currentLoopData = $categories ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <a href="<?php echo e(route('products.index', ['category' => $category->slug])); ?>" 
+                                   class="nav-link <?php echo e(request('category') == $category->slug ? 'active' : ''); ?>">
+                                    <i class="fa-solid fa-tag me-2"></i><?php echo e($category->name); ?>
+
                                 </a>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             
-                            @auth
+                            <?php if(auth()->guard()->check()): ?>
                                 <div class="mobile-nav-divider"></div>
                                 <div class="mobile-user-section">
                                     <div class="mobile-user-info">
                                         <i class="fa-solid fa-user-circle me-2"></i>
-                                        <span>{{ Auth::user()->name }}</span>
+                                        <span><?php echo e(Auth::user()->name); ?></span>
                                     </div>
-                                    <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">
+                                    <a href="<?php echo e(route('profile')); ?>" class="nav-link <?php echo e(request()->routeIs('profile') ? 'active' : ''); ?>">
                                         <i class="fa-solid fa-user me-2"></i>Profile
                                     </a>
-                                    <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">
+                                    <a href="<?php echo e(route('orders.index')); ?>" class="nav-link <?php echo e(request()->routeIs('orders.*') ? 'active' : ''); ?>">
                                         <i class="fa-solid fa-shopping-bag me-2"></i>My Orders
                                     </a>
-                                    @if(auth()->user()->role === 'admin')
-                                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->is('admin*') ? 'active' : '' }}">
+                                    <?php if(auth()->user()->role === 'admin'): ?>
+                                        <a href="<?php echo e(route('admin.dashboard')); ?>" class="nav-link <?php echo e(request()->is('admin*') ? 'active' : ''); ?>">
                                             <i class="fa-solid fa-cog me-2"></i>Admin Panel
                                         </a>
-                                    @endif
-                                    @if(auth()->user()->role === 'super_admin')
-                                        <a href="{{ route('super_admin.dashboard') }}" class="nav-link {{ request()->is('super-admin*') ? 'active' : '' }}">
+                                    <?php endif; ?>
+                                    <?php if(auth()->user()->role === 'super_admin'): ?>
+                                        <a href="<?php echo e(route('super_admin.dashboard')); ?>" class="nav-link <?php echo e(request()->is('super-admin*') ? 'active' : ''); ?>">
                                             <i class="fa-solid fa-crown me-2"></i>Super Admin
                                         </a>
-                                    @endif
-                                    <a href="{{ route('logout') }}" class="nav-link text-danger" 
+                                    <?php endif; ?>
+                                    <a href="<?php echo e(route('logout')); ?>" class="nav-link text-danger" 
                                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                         <i class="fa-solid fa-sign-out-alt me-2"></i>Logout
                                     </a>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <div class="mobile-nav-divider"></div>
                                 <div class="mobile-auth-section">
-                                    <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 mb-2">
+                                    <a href="<?php echo e(route('login')); ?>" class="btn btn-outline-primary w-100 mb-2">
                                         <i class="fa-solid fa-sign-in-alt me-2"></i>Login
                                     </a>
-                                    <a href="{{ route('register') }}" class="btn btn-primary w-100">
+                                    <a href="<?php echo e(route('register')); ?>" class="btn btn-primary w-100">
                                         <i class="fa-solid fa-user-plus me-2"></i>Register
                                     </a>
                                 </div>
-                            @endauth
+                            <?php endif; ?>
                         </div>
                     </div>
                 </nav>
@@ -1133,24 +1135,25 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="d-flex flex-wrap justify-content-center">
-                            <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Home</a>
-                            <a href="{{ route('products.index') }}" class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">All Products</a>
-                            @foreach($categories ?? [] as $category)
-                                <a href="{{ route('products.index', ['category' => $category->slug]) }}" 
-                                   class="nav-link {{ request('category') == $category->slug ? 'active' : '' }}">
-                                    {{ $category->name }}
+                            <a href="<?php echo e(route('home')); ?>" class="nav-link <?php echo e(request()->routeIs('home') ? 'active' : ''); ?>">Home</a>
+                            <a href="<?php echo e(route('products.index')); ?>" class="nav-link <?php echo e(request()->routeIs('products.*') ? 'active' : ''); ?>">All Products</a>
+                            <?php $__currentLoopData = $categories ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <a href="<?php echo e(route('products.index', ['category' => $category->slug])); ?>" 
+                                   class="nav-link <?php echo e(request('category') == $category->slug ? 'active' : ''); ?>">
+                                    <?php echo e($category->name); ?>
+
                                 </a>
-                            @endforeach
-                            @auth
-                                <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">My Orders</a>
-                                @if(auth()->user()->role === 'admin')
-                                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->is('admin*') ? 'active' : '' }}">Admin</a>
-                                @endif
-                                @if(auth()->user()->role === 'super_admin')
-                                    <a href="{{ route('super_admin.dashboard') }}" class="nav-link {{ request()->is('super-admin*') ? 'active' : '' }}">Super Admin</a>
-                                @endif
-                            @endauth
-                            <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}">Profile</a>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            <?php if(auth()->guard()->check()): ?>
+                                <a href="<?php echo e(route('orders.index')); ?>" class="nav-link <?php echo e(request()->routeIs('orders.*') ? 'active' : ''); ?>">My Orders</a>
+                                <?php if(auth()->user()->role === 'admin'): ?>
+                                    <a href="<?php echo e(route('admin.dashboard')); ?>" class="nav-link <?php echo e(request()->is('admin*') ? 'active' : ''); ?>">Admin</a>
+                                <?php endif; ?>
+                                <?php if(auth()->user()->role === 'super_admin'): ?>
+                                    <a href="<?php echo e(route('super_admin.dashboard')); ?>" class="nav-link <?php echo e(request()->is('super-admin*') ? 'active' : ''); ?>">Super Admin</a>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <a href="<?php echo e(route('profile')); ?>" class="nav-link <?php echo e(request()->routeIs('profile') ? 'active' : ''); ?>">Profile</a>
                         </div>
                     </div>
                 </div>
@@ -1158,7 +1161,7 @@
         </nav>
 
         <main class="py-4" id="main-content" role="main" tabindex="-1">
-            @yield('content')
+            <?php echo $__env->yieldContent('content'); ?>
         </main>
 
         <!-- Footer -->
@@ -1182,8 +1185,8 @@
                             <i class="fa-solid fa-link me-2"></i>Quick Links
                         </h5>
                         <ul class="list-unstyled">
-                            <li><a href="{{ route('home') }}"><i class="fa-solid fa-home me-2"></i>Home</a></li>
-                            <li><a href="{{ route('products.index') }}"><i class="fa-solid fa-box me-2"></i>Products</a></li>
+                            <li><a href="<?php echo e(route('home')); ?>"><i class="fa-solid fa-home me-2"></i>Home</a></li>
+                            <li><a href="<?php echo e(route('products.index')); ?>"><i class="fa-solid fa-box me-2"></i>Products</a></li>
                             <li><a href="#"><i class="fa-solid fa-info-circle me-2"></i>About Us</a></li>
                             <li><a href="#"><i class="fa-solid fa-envelope me-2"></i>Contact</a></li>
                         </ul>
@@ -1213,7 +1216,7 @@
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <p>&copy; {{ date('Y') }} Vault64. All rights reserved. | Premium Racing Collectibles</p>
+                    <p>&copy; <?php echo e(date('Y')); ?> Vault64. All rights reserved. | Premium Racing Collectibles</p>
                 </div>
             </div>
         </footer>
@@ -1249,7 +1252,7 @@
 
         // Update cart count via AJAX
         function updateCartCount() {
-            fetch('{{ route("cart.count") }}')
+            fetch('<?php echo e(route("cart.count")); ?>')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('cart-count').textContent = data.count;
@@ -1305,8 +1308,9 @@
     <!-- Bootstrap JS Bundle (Popper included) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-        @csrf
+    <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST" class="d-none">
+        <?php echo csrf_field(); ?>
     </form>
 </body>
 </html>
+<?php /**PATH C:\xampp\htdocs\VergeFlow\resources\views/layouts/app_modern.blade.php ENDPATH**/ ?>

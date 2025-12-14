@@ -157,7 +157,7 @@ class ProductController extends Controller
 
         Product::create($data);
         
-        return redirect()->route('admin.products')->with('success', 'Product created successfully');
+        return redirect()->route('admin.products.index')->with('success', 'Product created successfully');
     }
 
     public function edit($id)
@@ -195,7 +195,7 @@ class ProductController extends Controller
 
         $product->update($data);
         
-        return redirect()->route('admin.products')->with('success', 'Product updated successfully');
+        return redirect()->route('admin.products.index')->with('success', 'Product updated successfully');
     }
 
     public function destroy($id)
@@ -204,7 +204,7 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
         $product->delete();
         
-        return redirect()->route('admin.products')->with('success', 'Product deleted successfully');
+        return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully');
     }
 
     public function import(Request $request)

@@ -98,6 +98,35 @@ class OrderController extends Controller
 
             DB::commit();
 
+            // Automatically book courier after order is created
+            try {
+                // Reload order with relationships
+                $order->load(['items.product', 'user']);
+                
+                $autoBookingService = new \App\Services\AutoCourierBookingService();
+                $bookingResult = $autoBookingService->autoBookCourier($order);
+                
+                if ($bookingResult['success']) {
+                    Log::info('Automatic courier booking successful', [
+                        'order_id' => $order->id,
+                        'awb_code' => $bookingResult['awb_code'] ?? null
+                    ]);
+                    // Order will be updated with tracking details by the service
+                } else {
+                    Log::warning('Automatic courier booking failed', [
+                        'order_id' => $order->id,
+                        'message' => $bookingResult['message'] ?? 'Unknown error'
+                    ]);
+                    // Order is still created, but requires manual courier booking
+                }
+            } catch (\Exception $e) {
+                // Don't fail the order creation if auto-booking fails
+                Log::error('Auto courier booking exception', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             return redirect()->route('orders.show', $order->id)->with('success', 'Order placed successfully');
 
         } catch (\Exception $e) {
@@ -180,6 +209,7 @@ class OrderController extends Controller
                 'notes' => $request->notes
             ]);
 
+
             foreach ($cartItems as $cartItem) {
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -197,6 +227,32 @@ class OrderController extends Controller
             });
 
             DB::commit();
+
+            // Automatically book courier after order is created
+            try {
+                $autoBookingService = new \App\Services\AutoCourierBookingService();
+                $bookingResult = $autoBookingService->autoBookCourier($order);
+                
+                if ($bookingResult['success']) {
+                    Log::info('Automatic courier booking successful', [
+                        'order_id' => $order->id,
+                        'awb_code' => $bookingResult['awb_code'] ?? null
+                    ]);
+                    // Order will be updated with tracking details by the service
+                } else {
+                    Log::warning('Automatic courier booking failed', [
+                        'order_id' => $order->id,
+                        'message' => $bookingResult['message'] ?? 'Unknown error'
+                    ]);
+                    // Order is still created, but requires manual courier booking
+                }
+            } catch (\Exception $e) {
+                // Don't fail the order creation if auto-booking fails
+                Log::error('Auto courier booking exception', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             return redirect()->route('orders.show', $order->id)->with('success', 'Order placed successfully');
 

@@ -205,7 +205,7 @@ class AdminController extends Controller
 
         Category::create($data);
 
-        return redirect()->route('admin.categories')->with('success', 'Category created successfully');
+        return redirect()->route('admin.categories.index')->with('success', 'Category created successfully');
     }
 
     public function updateCategory(Request $request, $id)
@@ -224,7 +224,7 @@ class AdminController extends Controller
 
         $category->update($data);
 
-        return redirect()->route('admin.categories')->with('success', 'Category updated successfully');
+        return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully');
     }
 
     public function destroyCategory($id)
@@ -233,12 +233,12 @@ class AdminController extends Controller
         
         // Check if category has products
         if ($category->products()->count() > 0) {
-            return redirect()->route('admin.categories')->with('error', 'Cannot delete category with existing products');
+            return redirect()->route('admin.categories.index')->with('error', 'Cannot delete category with existing products');
         }
 
         $category->delete();
 
-        return redirect()->route('admin.categories')->with('success', 'Category deleted successfully');
+        return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully');
     }
 
     // User Management Methods
@@ -254,7 +254,7 @@ class AdminController extends Controller
 
         $user->update($request->all());
 
-        return redirect()->route('admin.users')->with('success', 'User updated successfully');
+        return redirect()->route('admin.users.index')->with('success', 'User updated successfully');
     }
 
     public function destroyUser($id)
@@ -263,11 +263,11 @@ class AdminController extends Controller
         
         // Prevent admin from deleting themselves
         if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users')->with('error', 'You cannot delete your own account');
+            return redirect()->route('admin.users.index')->with('error', 'You cannot delete your own account');
         }
 
         $user->delete();
 
-        return redirect()->route('admin.users')->with('success', 'User deleted successfully');
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
     }
 }

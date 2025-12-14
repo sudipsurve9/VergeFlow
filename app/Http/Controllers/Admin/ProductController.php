@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Client;
+use App\Services\DatabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -16,13 +18,127 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $clientId = auth()->user()->client_id;
-        $products = Product::with(['category', 'reviews'])
-            ->where('client_id', $clientId)
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $user = auth()->user();
+        $clientId = $user->client_id;
+        
+        // Handle super admin or users without client_id
+        if (!$clientId) {
+            if ($user->isSuperAdmin()) {
+                // Check session for selected client
+                $clientId = session('admin_selected_client_id');
+                
+                // If no client in session, get first active client with database
+                if (!$clientId) {
+                    $firstClient = Client::on('main')
+                        ->where('is_active', true)
+                        ->whereNotNull('database_name')
+                        ->first();
+                    
+                    if ($firstClient) {
+                        $clientId = $firstClient->id;
+                        session(['admin_selected_client_id' => $clientId]);
+                    } else {
+                        // Try any client with database
+                        $anyClient = Client::on('main')
+                            ->whereNotNull('database_name')
+                            ->first();
+                        
+                        if ($anyClient) {
+                            $clientId = $anyClient->id;
+                            session(['admin_selected_client_id' => $clientId]);
+                        } else {
+                            return redirect()->route('admin.dashboard')
+                                ->with('error', 'No clients with databases found. Please create a client first.');
+                        }
+                    }
+                }
+            } else {
+                return redirect()->route('admin.dashboard')
+                    ->with('error', 'Your account is not associated with a client. Please contact support.');
+            }
+        }
+        
+        // Get client connection
+        $connectionName = $this->getClientConnection($clientId);
+        
+        if (!$connectionName || $connectionName === 'main') {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Failed to connect to client database. Please check database configuration.');
+        }
+        
+        try {
+            // Verify connection works
+            \DB::connection($connectionName)->getPdo();
+            
+            $products = Product::on($connectionName)
+                ->with(['category', 'reviews'])
+                ->where('client_id', $clientId)
+                ->orderBy('created_at', 'desc')
+                ->paginate(15);
+        } catch (\Exception $e) {
+            \Log::error('Failed to fetch products', [
+                'error' => $e->getMessage(),
+                'connection' => $connectionName,
+                'client_id' => $clientId,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Clear invalid client from session
+            if ($user->isSuperAdmin()) {
+                session()->forget('admin_selected_client_id');
+            }
+            
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Failed to load products. Database connection error: ' . $e->getMessage());
+        }
             
         return view('admin.products.index', compact('products'));
+    }
+    
+    /**
+     * Get client database connection name
+     */
+    private function getClientConnection($clientId)
+    {
+        if (!$clientId) {
+            return 'main';
+        }
+        
+        // Get client from main database
+        $client = Client::on('main')->find($clientId);
+        if (!$client) {
+            \Log::error('Client not found', ['client_id' => $clientId]);
+            return 'main';
+        }
+        
+        if (!$client->database_name) {
+            \Log::error('Client has no database_name', ['client_id' => $clientId, 'client_name' => $client->name]);
+            return 'main';
+        }
+        
+        // Get or create connection
+        $databaseService = new DatabaseService();
+        try {
+            $connectionName = $databaseService->getClientConnection($client);
+            
+            // Verify connection exists in config
+            if (!config("database.connections.{$connectionName}")) {
+                $databaseService->createClientConnection($client, $connectionName);
+            }
+            
+            // Set it for future use
+            app()->instance('tenant.connection', $connectionName);
+            config(['database.default' => $connectionName]);
+            
+            return $connectionName;
+        } catch (\Exception $e) {
+            \Log::error('Failed to get client connection in ProductController', [
+                'error' => $e->getMessage(),
+                'client_id' => $clientId,
+                'database_name' => $client->database_name
+            ]);
+            return 'main';
+        }
     }
 
     /**

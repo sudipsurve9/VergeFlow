@@ -145,20 +145,23 @@ class ShiprocketService
             return null;
         }
 
+        // Extract address details from order
+        $addressData = $this->extractAddressFromOrder($order);
+        
         // Prepare order data as per Shiprocket API
         $orderData = [
             'order_id' => $order->id,
             'order_date' => $order->created_at->format('Y-m-d H:i'),
             'pickup_location' => 'Default', // You may want to make this dynamic
-            'billing_customer_name' => $order->shippingAddress->name ?? $order->user->name,
-            'billing_last_name' => '',
-            'billing_address' => $order->shippingAddress->address ?? '',
-            'billing_city' => $order->shippingAddress->city ?? '',
-            'billing_pincode' => $order->shippingAddress->pincode ?? '',
-            'billing_state' => $order->shippingAddress->state ?? '',
-            'billing_country' => $order->shippingAddress->country ?? 'India',
+            'billing_customer_name' => $addressData['name'],
+            'billing_last_name' => $addressData['last_name'] ?? '',
+            'billing_address' => $addressData['address'],
+            'billing_city' => $addressData['city'],
+            'billing_pincode' => $addressData['pincode'],
+            'billing_state' => $addressData['state'],
+            'billing_country' => $addressData['country'] ?? 'India',
             'billing_email' => $order->user->email ?? '',
-            'billing_phone' => $order->shippingAddress->phone ?? '',
+            'billing_phone' => $addressData['phone'],
             'shipping_is_billing' => true,
             'order_items' => $order->items->map(function($item) {
                 return [
@@ -223,5 +226,69 @@ class ShiprocketService
             \Log::error('Shiprocket courier check error', ['error' => $e->getMessage()]);
             return null;
         }
+    }
+
+    /**
+     * Extract address details from order
+     * Handles both Address model relationship and string format
+     * 
+     * @param \App\Models\Order $order
+     * @return array
+     */
+    protected function extractAddressFromOrder($order)
+    {
+        // Try to get address from relationship first
+        if ($order->shippingAddress) {
+            return [
+                'name' => $order->shippingAddress->name ?? $order->user->name ?? 'Customer',
+                'last_name' => $order->shippingAddress->last_name ?? '',
+                'address' => trim(($order->shippingAddress->address_line_1 ?? '') . ' ' . ($order->shippingAddress->address_line_2 ?? '')),
+                'city' => $order->shippingAddress->city ?? '',
+                'pincode' => $order->shippingAddress->postal_code ?? '',
+                'state' => $order->shippingAddress->state ?? '',
+                'country' => $order->shippingAddress->country ?? 'India',
+                'phone' => $order->shippingAddress->phone ?? '',
+            ];
+        }
+
+        // If address is stored as string, try to parse it
+        if ($order->shipping_address) {
+            // Try to extract pincode
+            $pincode = '';
+            if (preg_match('/-?\s*(\d{6})/', $order->shipping_address, $matches)) {
+                $pincode = $matches[1];
+            }
+            
+            // Extract phone if present
+            $phone = '';
+            if (preg_match('/Phone:\s*([\d\s\+\-]+)/i', $order->shipping_address, $matches)) {
+                $phone = trim($matches[1]);
+            }
+            
+            // For string addresses, we'll use the full address
+            // This is a fallback - ideally addresses should be in Address model
+            return [
+                'name' => $order->user->name ?? 'Customer',
+                'last_name' => '',
+                'address' => $order->shipping_address,
+                'city' => '',
+                'pincode' => $pincode,
+                'state' => '',
+                'country' => 'India',
+                'phone' => $phone,
+            ];
+        }
+
+        // Fallback to user data
+        return [
+            'name' => $order->user->name ?? 'Customer',
+            'last_name' => '',
+            'address' => '',
+            'city' => '',
+            'pincode' => '',
+            'state' => '',
+            'country' => 'India',
+            'phone' => $order->user->phone ?? '',
+        ];
     }
 } 
