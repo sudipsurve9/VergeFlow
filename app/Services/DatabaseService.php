@@ -57,10 +57,11 @@ class DatabaseService
     private function createDatabase(string $databaseName): void
     {
         // Prefer MAIN_DB_* or CLIENT_DB_* credentials, fallback to mysql connection
-        $host = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', config('database.connections.mysql.host')));
-        $port = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', config('database.connections.mysql.port')));
-        $user = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', config('database.connections.mysql.username')));
-        $pass = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', config('database.connections.mysql.password')));
+        $mysqlConfig = config('database.connections.mysql', []);
+        $host = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', $mysqlConfig['host'] ?? env('DB_HOST', '127.0.0.1')));
+        $port = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', $mysqlConfig['port'] ?? env('DB_PORT', '3306')));
+        $user = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', $mysqlConfig['username'] ?? env('DB_USERNAME', 'root')));
+        $pass = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', $mysqlConfig['password'] ?? env('DB_PASSWORD', '')));
         
         try {
             // Use direct PDO connection for database creation
@@ -86,11 +87,24 @@ class DatabaseService
     private function runMigrationsOnDatabase(string $databaseName): void
     {
         // Build a base connection preferring MAIN_DB_* / CLIENT_DB_* envs
-        $base = config('database.connections.mysql');
-        $base['host'] = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', $base['host']));
-        $base['port'] = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', $base['port']));
-        $base['username'] = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', $base['username']));
-        $base['password'] = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', $base['password']));
+        $base = config('database.connections.mysql', []);
+        
+        // Ensure we have a valid base config
+        if (empty($base)) {
+            $base = [
+                'driver' => 'mysql',
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+                'strict' => true,
+                'engine' => null,
+            ];
+        }
+        
+        $base['host'] = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', $base['host'] ?? env('DB_HOST', '127.0.0.1')));
+        $base['port'] = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', $base['port'] ?? env('DB_PORT', '3306')));
+        $base['username'] = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', $base['username'] ?? env('DB_USERNAME', 'root')));
+        $base['password'] = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', $base['password'] ?? env('DB_PASSWORD', '')));
         
         // Create temporary connection for the new database
         $clientConnection = array_merge($base, ['database' => $databaseName]);
@@ -139,13 +153,31 @@ class DatabaseService
     public function createClientConnection(Client $client, string $connectionName): void
     {
         // Build a base connection preferring MAIN_DB_* / CLIENT_DB_* envs
-        $base = config('database.connections.mysql');
-        $base['host'] = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', $base['host']));
-        $base['port'] = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', $base['port']));
-        $base['username'] = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', $base['username']));
-        $base['password'] = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', $base['password']));
+        $base = config('database.connections.mysql', []);
+        
+        // Ensure we have a valid base config
+        if (empty($base)) {
+            $base = [
+                'driver' => 'mysql',
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+                'strict' => true,
+                'engine' => null,
+            ];
+        }
+        
+        // Get connection details with fallbacks
+        $host = env('CLIENT_DB_HOST', env('MAIN_DB_HOST', $base['host'] ?? env('DB_HOST', '127.0.0.1')));
+        $port = env('CLIENT_DB_PORT', env('MAIN_DB_PORT', $base['port'] ?? env('DB_PORT', '3306')));
+        $username = env('CLIENT_DB_USERNAME', env('MAIN_DB_USERNAME', $base['username'] ?? env('DB_USERNAME', 'root')));
+        $password = env('CLIENT_DB_PASSWORD', env('MAIN_DB_PASSWORD', $base['password'] ?? env('DB_PASSWORD', '')));
         
         $clientConnection = array_merge($base, [
+            'host' => $host,
+            'port' => $port,
+            'username' => $username,
+            'password' => $password,
             'database' => $client->database_name
         ]);
         

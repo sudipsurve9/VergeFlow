@@ -83,24 +83,33 @@ class MigrateClientDatabases extends Command
                 DB::connection($connectionName)->getPdo();
                 $this->info("✓ Connection: {$connectionName}");
 
-                // Run migrations
-                if ($fresh) {
-                    $this->warn("⚠️  Running FRESH migrations (will DROP all tables!)");
-                    if (!$this->confirm('Continue?', false)) {
-                        $this->warn("Skipped {$client->name}");
-                        continue;
+                // Set the default connection temporarily to avoid main-db migrations
+                $originalDefault = config('database.default');
+                config(['database.default' => $connectionName]);
+                
+                try {
+                    // Run migrations
+                    if ($fresh) {
+                        $this->warn("⚠️  Running FRESH migrations (will DROP all tables!)");
+                        if (!$this->confirm('Continue?', false)) {
+                            $this->warn("Skipped {$client->name}");
+                            continue;
+                        }
+                        
+                        Artisan::call('migrate:fresh', [
+                            '--database' => $connectionName,
+                            '--force' => true,
+                            '--path' => 'database/migrations',
+                        ]);
+                    } else {
+                        Artisan::call('migrate', [
+                            '--database' => $connectionName,
+                            '--force' => true,
+                        ]);
                     }
-                    
-                    Artisan::call('migrate:fresh', [
-                        '--database' => $connectionName,
-                        '--force' => true,
-                        '--path' => 'database/migrations',
-                    ]);
-                } else {
-                    Artisan::call('migrate', [
-                        '--database' => $connectionName,
-                        '--force' => true,
-                    ]);
+                } finally {
+                    // Restore original default connection
+                    config(['database.default' => $originalDefault]);
                 }
 
                 $output = trim(Artisan::output());
@@ -113,9 +122,14 @@ class MigrateClientDatabases extends Command
 
             } catch (\Exception $e) {
                 $this->error("✗ Failed: " . $e->getMessage());
-                if ($this->option('verbose')) {
+                $this->error("Error type: " . get_class($e));
+                
+                // Always show trace in production for debugging
+                if ($this->laravel->environment('production') || $this->option('verbose')) {
+                    $this->error("File: " . $e->getFile() . ":" . $e->getLine());
                     $this->error("Trace: " . $e->getTraceAsString());
                 }
+                
                 $failCount++;
                 $this->newLine();
             }

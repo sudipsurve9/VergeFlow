@@ -11,6 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Only run on main database
+        if (config('database.default') !== 'main' && !Schema::connection('main')->hasTable('clients')) {
+            return;
+        }
+        
+        // Check if column already exists
+        if (Schema::connection('main')->hasColumn('clients', 'status')) {
+            return;
+        }
+        
         Schema::connection('main')->table('clients', function (Blueprint $table) {
             $table->string('status', 50)->default('active')->after('theme');
         });
