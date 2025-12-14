@@ -281,6 +281,15 @@ php artisan vergeflow:debug-db-creation
 
 # Fix missing databases
 php artisan vergeflow:fix-missing-databases
+
+# Migrate all client databases (IMPORTANT: Run after deployment)
+php artisan clients:migrate --force
+
+# Migrate specific client database
+php artisan clients:migrate --client=1 --force
+
+# Run fresh migrations on client database (WARNING: Drops all data)
+php artisan clients:migrate --client=1 --fresh --force
 ```
 
 ### Performance Optimization

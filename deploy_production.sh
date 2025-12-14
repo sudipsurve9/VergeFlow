@@ -117,8 +117,14 @@ print_status "✓ Application key generated"
 # Step 8: Run database migrations
 print_status "Step 8: Running database migrations"
 
+# Migrate main database
 php artisan migrate --force
-print_status "✓ Database migrations completed"
+print_status "✓ Main database migrations completed"
+
+# Migrate all client databases
+print_status "Step 8b: Running client database migrations"
+php artisan clients:migrate --force
+print_status "✓ Client database migrations completed"
 
 # Step 9: Run seeders
 print_status "Step 9: Running seeders"
