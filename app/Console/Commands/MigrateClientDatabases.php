@@ -138,13 +138,16 @@ class MigrateClientDatabases extends Command
                         ]);
                     }
                 } catch (\Exception $e) {
-                    // If migration fails due to existing tables/columns, try to sync migration status
+                    // If migration fails due to existing tables/columns/enum issues, try to sync migration status
                     $errorMessage = $e->getMessage();
-                    if (strpos($errorMessage, 'already exists') !== false || 
-                        strpos($errorMessage, 'Duplicate column') !== false ||
-                        strpos($errorMessage, 'Duplicate key') !== false) {
-                        
-                        $this->warn("⚠️  Some tables/columns already exist. Attempting to sync migration status...");
+                    $shouldSync = strpos($errorMessage, 'already exists') !== false || 
+                                  strpos($errorMessage, 'Duplicate column') !== false ||
+                                  strpos($errorMessage, 'Duplicate key') !== false ||
+                                  strpos($errorMessage, 'Data truncated') !== false ||
+                                  strpos($errorMessage, 'truncated for column') !== false;
+                    
+                    if ($shouldSync) {
+                        $this->warn("⚠️  Migration conflict detected. Attempting to sync migration status...");
                         $this->syncMigrationStatus($connectionName, $client);
                         
                         // Try again
@@ -156,8 +159,12 @@ class MigrateClientDatabases extends Command
                             $this->info("✓ Migrations completed after sync");
                         } catch (\Exception $e2) {
                             // If it still fails, sync again and try one more time
-                            if (strpos($e2->getMessage(), 'already exists') !== false || 
-                                strpos($e2->getMessage(), 'Duplicate column') !== false) {
+                            $errorMessage2 = $e2->getMessage();
+                            $shouldSync2 = strpos($errorMessage2, 'already exists') !== false || 
+                                          strpos($errorMessage2, 'Duplicate column') !== false ||
+                                          strpos($errorMessage2, 'Data truncated') !== false;
+                            
+                            if ($shouldSync2) {
                                 $this->warn("⚠️  Additional sync needed...");
                                 $this->syncMigrationStatus($connectionName, $client);
                                 
@@ -289,6 +296,27 @@ class MigrateClientDatabases extends Command
                 ],
             ];
             
+            // Map enum/type modification migrations (table => check_function => migration)
+            $enumMigrationMap = [
+                'users' => [
+                    'migration' => '2025_07_05_080000_update_user_role_enum',
+                    'check' => function($schema, $table) use ($connectionName) {
+                        // Check if role enum includes 'super_admin'
+                        try {
+                            $columnInfo = DB::connection($connectionName)
+                                ->select("SHOW COLUMNS FROM `{$table}` WHERE Field = 'role'");
+                            if (!empty($columnInfo)) {
+                                $type = $columnInfo[0]->Type ?? '';
+                                return strpos($type, 'super_admin') !== false;
+                            }
+                        } catch (\Exception $e) {
+                            // If check fails, assume migration is needed
+                        }
+                        return false;
+                    }
+                ],
+            ];
+            
             // Ensure migrations table exists
             if (!DB::connection($connectionName)->getSchemaBuilder()->hasTable('migrations')) {
                 DB::connection($connectionName)->statement("
@@ -364,6 +392,36 @@ class MigrateClientDatabases extends Command
                                 $syncedCount++;
                             }
                         }
+                    }
+                }
+            }
+            
+            // Mark enum/type modification migrations as run if enum already has correct values
+            foreach ($enumMigrationMap as $table => $enumInfo) {
+                $tableLower = strtolower($table);
+                if (in_array($tableLower, $existingTables)) {
+                    $migration = $enumInfo['migration'];
+                    $check = $enumInfo['check'];
+                    
+                    try {
+                        if ($check(DB::connection($connectionName)->getSchemaBuilder(), $table)) {
+                            $exists = DB::connection($connectionName)
+                                ->table('migrations')
+                                ->where('migration', $migration)
+                                ->exists();
+                            
+                            if (!$exists) {
+                                DB::connection($connectionName)
+                                    ->table('migrations')
+                                    ->insert([
+                                        'migration' => $migration,
+                                        'batch' => $nextBatch
+                                    ]);
+                                $syncedCount++;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Skip if check fails
                     }
                 }
             }
