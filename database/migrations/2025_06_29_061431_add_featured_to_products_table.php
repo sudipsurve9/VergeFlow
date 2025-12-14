@@ -13,6 +13,16 @@ return new class extends Migration
      */
     public function up()
     {
+        // Skip if table doesn't exist
+        if (!Schema::hasTable('products')) {
+            return;
+        }
+        
+        // Check if column already exists (either 'featured' or 'is_featured')
+        if (Schema::hasColumn('products', 'featured') || Schema::hasColumn('products', 'is_featured')) {
+            return;
+        }
+        
         Schema::table('products', function (Blueprint $table) {
             $table->boolean('featured')->default(false)->after('sale_price');
         });

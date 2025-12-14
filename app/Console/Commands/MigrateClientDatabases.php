@@ -138,9 +138,13 @@ class MigrateClientDatabases extends Command
                         ]);
                     }
                 } catch (\Exception $e) {
-                    // If migration fails due to existing tables, try to sync migration status
-                    if (strpos($e->getMessage(), 'already exists') !== false) {
-                        $this->warn("⚠️  Some tables already exist. Attempting to sync migration status...");
+                    // If migration fails due to existing tables/columns, try to sync migration status
+                    $errorMessage = $e->getMessage();
+                    if (strpos($errorMessage, 'already exists') !== false || 
+                        strpos($errorMessage, 'Duplicate column') !== false ||
+                        strpos($errorMessage, 'Duplicate key') !== false) {
+                        
+                        $this->warn("⚠️  Some tables/columns already exist. Attempting to sync migration status...");
                         $this->syncMigrationStatus($connectionName, $client);
                         
                         // Try again
@@ -151,7 +155,21 @@ class MigrateClientDatabases extends Command
                             ]);
                             $this->info("✓ Migrations completed after sync");
                         } catch (\Exception $e2) {
-                            throw $e2; // Re-throw if still fails
+                            // If it still fails, sync again and try one more time
+                            if (strpos($e2->getMessage(), 'already exists') !== false || 
+                                strpos($e2->getMessage(), 'Duplicate column') !== false) {
+                                $this->warn("⚠️  Additional sync needed...");
+                                $this->syncMigrationStatus($connectionName, $client);
+                                
+                                // Final attempt
+                                Artisan::call('migrate', [
+                                    '--database' => $connectionName,
+                                    '--force' => true,
+                                ]);
+                                $this->info("✓ Migrations completed after additional sync");
+                            } else {
+                                throw $e2; // Re-throw if still fails with different error
+                            }
                         }
                     } else {
                         throw $e; // Re-throw other errors
@@ -241,6 +259,36 @@ class MigrateClientDatabases extends Command
                 'recently_viewed' => '2025_07_27_164000_create_recently_viewed_table',
             ];
             
+            // Map column-level migrations (table => column => migration)
+            $columnMigrationMap = [
+                'products' => [
+                    'featured' => '2025_06_29_061431_add_featured_to_products_table',
+                    'is_featured' => '2025_06_29_061431_add_featured_to_products_table', // Also check is_featured
+                    'client_id' => '2025_07_05_074952_add_client_id_to_products_table',
+                ],
+                'users' => [
+                    'client_id' => '2025_07_05_074637_add_client_id_to_users_table',
+                ],
+                'categories' => [
+                    'client_id' => '2025_07_05_075702_add_client_id_to_categories_table',
+                    'is_active' => '2025_08_17_145526_add_is_active_to_categories_table',
+                ],
+                'orders' => [
+                    'client_id' => '2025_07_05_075737_add_client_id_to_orders_table',
+                    'delivery_status' => '2025_07_02_104207_add_delivery_status_to_orders_table',
+                    'tracking_number' => '2025_07_02_104658_add_tracking_and_courier_fields_to_orders_table',
+                ],
+                'customers' => [
+                    'client_id' => '2025_07_05_075814_add_client_id_to_customers_table',
+                ],
+                'coupons' => [
+                    'client_id' => '2025_07_07_000001_add_client_id_to_coupons_table',
+                ],
+                'api_integrations' => [
+                    'updated_by' => '2025_06_30_053453_add_updated_by_to_api_integrations_table',
+                ],
+            ];
+            
             // Ensure migrations table exists
             if (!DB::connection($connectionName)->getSchemaBuilder()->hasTable('migrations')) {
                 DB::connection($connectionName)->statement("
@@ -279,6 +327,43 @@ class MigrateClientDatabases extends Command
                                 'batch' => $nextBatch
                             ]);
                         $syncedCount++;
+                    }
+                }
+            }
+            
+            // Mark column-level migrations as run based on existing columns
+            foreach ($columnMigrationMap as $table => $columns) {
+                $tableLower = strtolower($table);
+                if (in_array($tableLower, $existingTables)) {
+                    $schema = DB::connection($connectionName)->getSchemaBuilder();
+                    
+                    foreach ($columns as $column => $migration) {
+                        // Check if column exists (either the specified column or its renamed version)
+                        $columnExists = false;
+                        if ($column === 'featured' || $column === 'is_featured') {
+                            // For featured column, check both 'featured' and 'is_featured'
+                            $columnExists = $schema->hasColumn($table, 'featured') || 
+                                          $schema->hasColumn($table, 'is_featured');
+                        } else {
+                            $columnExists = $schema->hasColumn($table, $column);
+                        }
+                        
+                        if ($columnExists) {
+                            $exists = DB::connection($connectionName)
+                                ->table('migrations')
+                                ->where('migration', $migration)
+                                ->exists();
+                            
+                            if (!$exists) {
+                                DB::connection($connectionName)
+                                    ->table('migrations')
+                                    ->insert([
+                                        'migration' => $migration,
+                                        'batch' => $nextBatch
+                                    ]);
+                                $syncedCount++;
+                            }
+                        }
                     }
                 }
             }

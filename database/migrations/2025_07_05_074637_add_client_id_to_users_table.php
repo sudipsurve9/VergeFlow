@@ -13,6 +13,14 @@ class AddClientIdToUsersTable extends Migration
      */
     public function up()
     {
+        if (!Schema::hasTable('users')) {
+            return;
+        }
+        
+        if (Schema::hasColumn('users', 'client_id')) {
+            return;
+        }
+        
         Schema::table('users', function (Blueprint $table) {
             $table->foreignId('client_id')->nullable()->constrained()->onDelete('cascade');
         });
